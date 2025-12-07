@@ -4,9 +4,9 @@ export class Appointment {
   pet_id: number;
   branch_id: number;
   employee_id: number;
-  appointment_time: Date;
-  status: "Pending" | "Confirmed" | "Completed" | "Cancelled";
-  channel: "Online" | "Offline";
+  appointment_time: string;
+  status: string;
+  channel: string;
   service_ids: number[];
 
   constructor(
@@ -14,9 +14,9 @@ export class Appointment {
     pet_id: number,
     branch_id: number,
     employee_id: number,
-    appointment_time: Date,
-    status: "Pending" | "Confirmed" | "Completed" | "Cancelled",
-    channel: "Online" | "Offline",
+    appointment_time: string,
+    status: string,
+    channel: string,
     service_ids: number[],
     appointment_id: number | null = null
   ) {

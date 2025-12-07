@@ -1,9 +1,8 @@
 import pool from "../config/db";
 import { Appointment } from "../model/appointment";
 
-// Nếu muốn, có thể tạo interface cho dữ liệu trả về
 export interface IAppointmentResult {
-  fnc_insert_appointment: number; // appointment_id trả về từ DB
+  fnc_insert_appointment: number;
 }
 
 export const insertAppointmentRepo = async (
@@ -14,6 +13,7 @@ export const insertAppointmentRepo = async (
       $1, $2, $3, $4, $5, $6, $7, $8
     )
   `;
+
   const values = [
     appt.customer_id,
     appt.pet_id,
@@ -25,6 +25,6 @@ export const insertAppointmentRepo = async (
     appt.service_ids,
   ];
 
-  const res = await pool.query<IAppointmentResult>(query, values);
+  const res = await pool.query(query, values);
   return res.rows[0];
 };

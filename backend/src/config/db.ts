@@ -1,4 +1,3 @@
-// db.ts
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
@@ -23,9 +22,9 @@ pool
 export default pool;
 
 // Hàm check bảng
-async function checkTable(): Promise<void> {
+async function checkTable() {
   try {
-    const res = await pool.query<{ table_name: string }>(`
+    const res = await pool.query(`
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'public';
