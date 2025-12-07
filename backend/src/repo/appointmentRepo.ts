@@ -28,3 +28,33 @@ export const insertAppointmentRepo = async (
   const res = await pool.query(query, values);
   return res.rows[0];
 };
+
+export const getAppointmentsRepo = async (): Promise<Appointment[]> => {
+  const query = `SELECT * FROM fnc_get_appointments()`;
+  const res = await pool.query(query);
+  return res.rows;
+};
+
+export const updateAppointmentStatusRepo = async (
+  appointment_id: number,
+  status: string
+): Promise<void> => {
+  const query = `
+    SELECT * FROM fnc_update_appointment_status($1, $2) 
+  `;
+
+  const values = [appointment_id, status];
+  await pool.query(query, values);
+};
+
+export const findAppointmentByPhoneRepo = async (
+  phone: string
+): Promise<Appointment[]> => {
+  const query = `
+    SELECT * FROM fnc_find_appointments_by_phone($1)
+  `;
+  const values = [phone];
+
+  const res = await pool.query(query, values);
+  return res.rows;
+};
