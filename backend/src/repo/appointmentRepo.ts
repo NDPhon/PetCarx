@@ -6,7 +6,7 @@ export interface IAppointmentResult {
 }
 
 export const insertAppointmentRepo = async (
-  appt: Appointment
+  appt: Appointment & { service_ids?: number[] }
 ): Promise<IAppointmentResult> => {
   const query = `
     SELECT * FROM fnc_insert_appointment(
@@ -22,7 +22,7 @@ export const insertAppointmentRepo = async (
     appt.appointment_time,
     appt.status,
     appt.channel,
-    appt.service_ids,
+    appt.service_ids || [],
   ];
 
   const res = await pool.query(query, values);

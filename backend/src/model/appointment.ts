@@ -7,7 +7,6 @@ export class Appointment {
   appointment_time: string;
   status: string;
   channel: string;
-  service_ids: number[];
 
   constructor(
     customer_id: number,
@@ -17,7 +16,6 @@ export class Appointment {
     appointment_time: string,
     status: string,
     channel: string,
-    service_ids: number[],
     appointment_id: number | null = null
   ) {
     this.appointment_id = appointment_id;
@@ -28,6 +26,5 @@ export class Appointment {
     this.appointment_time = appointment_time;
     this.status = status;
     this.channel = channel;
-    this.service_ids = service_ids;
   }
 }
