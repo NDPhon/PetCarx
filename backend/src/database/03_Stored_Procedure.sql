@@ -27,7 +27,6 @@ AS $$
 DECLARE
     v_appointment_id INTEGER;
     v_pet_customer_id INTEGER;
-    v_invalid_service INTEGER;
 BEGIN
     -- Kiểm tra status hợp lệ
     IF p_status NOT IN ('Pending','Confirmed','Completed','Cancelled') THEN
@@ -50,19 +49,6 @@ BEGIN
         RAISE EXCEPTION 'Pet ID % does not belong to Customer ID %', p_pet_id, p_customer_id;
     END IF;
 
-    -- Kiểm tra service có tồn tại tại branch và is_available = TRUE
-    SELECT s_id
-    INTO v_invalid_service
-    FROM unnest(p_service_ids) AS s_id
-    LEFT JOIN branch_service bs 
-           ON bs.branch_id = p_branch_id AND bs.service_id = s_id
-    WHERE bs.service_id IS NULL OR bs.is_available = FALSE
-    LIMIT 1;
-
-    IF v_invalid_service IS NOT NULL THEN
-        RAISE EXCEPTION 'Service ID % is not available at Branch ID %', v_invalid_service, p_branch_id;
-    END IF;
-
     -- Chèn bản ghi vào bảng appointment
     INSERT INTO appointment (
         customer_id, pet_id, branch_id, employee_id, appointment_time, status, channel
@@ -72,14 +58,9 @@ BEGIN
     )
     RETURNING appointment_id INTO v_appointment_id;
 
-    -- Chèn các service vào appointment_service
-    INSERT INTO appointment_service (appointment_id, service_id)
-    SELECT v_appointment_id, unnest(p_service_ids);
-
     RETURN v_appointment_id;
 END;
 $$;
-select * from appointment
 drop function fnc_get_appointments
 
 CREATE OR REPLACE FUNCTION fnc_get_appointments()
@@ -153,4 +134,99 @@ END;
 $$ LANGUAGE plpgsql;
 
 select * from pet 
+
+CREATE OR REPLACE FUNCTION fnc_get_services_by_appointment(
+    p_appointment_id INTEGER
+)
+RETURNS TABLE (
+    service_id   INTEGER,
+    service_name VARCHAR,
+    service_type VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        s.service_id,
+        s.service_name,
+        s.service_type
+    FROM appointment_service aps
+    JOIN service s ON s.service_id = thêm aps.service_id
+    WHERE aps.appointment_id = p_appointment_id;
+
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fnc_add_service_to_appointment(
+    p_appointment_id INTEGER,
+    p_service_id     INTEGER
+)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_branch_id INTEGER;
+    v_exists INTEGER;
+BEGIN
+    ----------------------------------------------------------------------
+    -- 1. Lấy branch của appointment
+    ----------------------------------------------------------------------
+    SELECT a.branch_id
+    INTO v_branch_id
+    FROM appointment AS a
+    WHERE a.appointment_id = p_appointment_id;
+
+    IF v_branch_id IS NULL THEN
+        RAISE EXCEPTION 'Appointment ID % does not exist', p_appointment_id;
+    END IF;
+
+    ----------------------------------------------------------------------
+    -- 2. Kiểm tra service có tồn tại
+    ----------------------------------------------------------------------
+    PERFORM 1
+    FROM service AS s
+    WHERE s.service_id = p_service_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Service ID % does not exist', p_service_id;
+    END IF;
+
+    ----------------------------------------------------------------------
+    -- 3. Kiểm tra service có sẵn tại chi nhánh
+    ----------------------------------------------------------------------
+    PERFORM 1
+    FROM branch_service AS bs
+    WHERE bs.branch_id = v_branch_id
+      AND bs.service_id = p_service_id
+      AND bs.is_available = TRUE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'Service ID % is not available at Branch ID %',
+            p_service_id, v_branch_id;
+    END IF;
+
+    ----------------------------------------------------------------------
+    -- 4. Kiểm tra service đã có trong appointment chưa
+    ----------------------------------------------------------------------
+    SELECT 1 INTO v_exists
+    FROM appointment_service AS aps
+    WHERE aps.appointment_id = p_appointment_id
+      AND aps.service_id = p_service_id;
+
+    IF v_exists = 1 THEN
+        RAISE EXCEPTION
+            'Service ID % already exists in Appointment ID %',
+            p_service_id, p_appointment_id;
+    END IF;
+
+    ----------------------------------------------------------------------
+    -- 5. Thêm vào appointment_service
+    ----------------------------------------------------------------------
+    INSERT INTO appointment_service AS aps (appointment_id, service_id)
+    VALUES (p_appointment_id, p_service_id);
+
+END;
+$$;
 

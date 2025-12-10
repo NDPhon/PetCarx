@@ -5,6 +5,8 @@ import {
   getAppointmentsService,
   updateAppointmentStatusService,
   findAppointmentByPhoneService,
+  getServicesByAppointmentIdService,
+  addServiceToAppointmentService,
 } from "../service/appointmentService";
 import { Appointment } from "../model/appointment";
 
@@ -100,6 +102,47 @@ router.post("/find-by-phone", async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error fetching appointments by phone:", error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || "Internal Server Error",
+      data: null,
+    });
+  }
+});
+
+router.get("/services/:appointment_id", async (req: Request, res: Response) => {
+  try {
+    const appointment_id = parseInt(req.params.appointment_id, 10);
+    const serviceIds = await getServicesByAppointmentIdService(appointment_id);
+    res.status(200).json({
+      code: 200,
+      message: "Fetched services successfully",
+      data: serviceIds,
+    });
+  } catch (error: any) {
+    console.error("Error fetching services by appointment ID:", error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || "Internal Server Error",
+      data: null,
+    });
+  }
+});
+
+router.post("/add-service", async (req: Request, res: Response) => {
+  try {
+    const {
+      appointment_id,
+      service_id,
+    }: { appointment_id: number; service_id: number } = req.body;
+    await addServiceToAppointmentService(appointment_id, service_id);
+    res.status(200).json({
+      code: 200,
+      message: "Service added to appointment successfully",
+      data: null,
+    });
+  } catch (error: any) {
+    console.error("Error adding service to appointment:", error);
     res.status(500).json({
       code: 500,
       message: error.message || "Internal Server Error",

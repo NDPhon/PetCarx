@@ -4,8 +4,11 @@ import {
   getAppointmentsRepo,
   updateAppointmentStatusRepo,
   findAppointmentByPhoneRepo,
+  getServicesByAppointmentIdRepo,
+  addServiceToAppointmentRepo,
 } from "../repo/appointmentRepo";
 import { Appointment } from "../model/appointment";
+import { Service } from "../model/service";
 
 export const insertAppointmentService = async (
   appt: Appointment
@@ -28,4 +31,17 @@ export const findAppointmentByPhoneService = async (
   phone: string
 ): Promise<Appointment[]> => {
   return await findAppointmentByPhoneRepo(phone);
+};
+
+export const getServicesByAppointmentIdService = async (
+  appointment_id: number
+): Promise<Service[]> => {
+  return await getServicesByAppointmentIdRepo(appointment_id);
+};
+
+export const addServiceToAppointmentService = async (
+  appointment_id: number,
+  service_id: number
+): Promise<void> => {
+  return await addServiceToAppointmentRepo(appointment_id, service_id);
 };
