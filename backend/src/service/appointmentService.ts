@@ -8,7 +8,7 @@ import {
 import { Appointment } from "../model/appointment";
 
 export const insertAppointmentService = async (
-  appt: Appointment & { service_ids?: number[] }
+  appt: Appointment
 ): Promise<IAppointmentResult> => {
   return await insertAppointmentRepo(appt);
 };

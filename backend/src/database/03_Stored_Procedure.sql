@@ -19,8 +19,7 @@ CREATE OR REPLACE FUNCTION fnc_insert_appointment(
     p_employee_id      INTEGER,
     p_appointment_time TIMESTAMP,
     p_status           VARCHAR,
-    p_channel          VARCHAR,
-    p_service_ids      INTEGER[]  -- danh sách service_id muốn sử dụng
+    p_channel          VARCHAR
 )
 RETURNS INTEGER
 LANGUAGE plpgsql

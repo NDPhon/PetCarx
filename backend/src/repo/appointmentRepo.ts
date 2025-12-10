@@ -10,7 +10,7 @@ export const insertAppointmentRepo = async (
 ): Promise<IAppointmentResult> => {
   const query = `
     SELECT * FROM fnc_insert_appointment(
-      $1, $2, $3, $4, $5, $6, $7, $8
+      $1, $2, $3, $4, $5, $6, $7
     )
   `;
 
@@ -22,7 +22,6 @@ export const insertAppointmentRepo = async (
     appt.appointment_time,
     appt.status,
     appt.channel,
-    appt.service_ids || [],
   ];
 
   const res = await pool.query(query, values);
