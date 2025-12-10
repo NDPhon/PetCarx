@@ -7,7 +7,9 @@ select * from pet
 select * from branch_service
 select * from appointment
 select * from appointment_service
+select * from product
 delete from branch_service
+
 
 -- Appointment
 CREATE OR REPLACE FUNCTION fnc_insert_appointment(
@@ -152,3 +154,4 @@ END;
 $$ LANGUAGE plpgsql;
 
 select * from pet 
+

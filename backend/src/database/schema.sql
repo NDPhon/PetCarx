@@ -136,7 +136,7 @@ CREATE TABLE employee (
     position     VARCHAR(30)   NOT NULL,
     status       VARCHAR(20)   NOT NULL DEFAULT 'Active',
     CONSTRAINT ck_employee_gender   CHECK (gender IN ('M','F','O')),
-    CONSTRAINT ck_employee_position CHECK (position IN ('Doctor','Sales','Receptionist','BranchManager'))
+    CONSTRAINT ck_employee_position CHECK (position IN ('Doctor','Sales','Receptionist','BranchManager','Assistant'))
 );
 
 -- ============================================
