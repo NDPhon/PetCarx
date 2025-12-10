@@ -1,35 +1,52 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import './App.css';
+import AppointmentForm from './components/appointments/AppointmentForm';
+import AppointmentList from './components/appointments/AppointmentList';
+import AppointmentSearch from './components/appointments/AppointmentSearch';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [activeTab, setActiveTab] = useState<'list' | 'create' | 'search'>('list');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleAppointmentCreated = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    setActiveTab('list');
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="app-container">
+      <header className="app-header">
+        <h1>PetCare Appointment Management</h1>
+      </header>
+
+      <nav className="app-nav">
+        <button
+          className={activeTab === 'list' ? 'active' : ''}
+          onClick={() => setActiveTab('list')}
+        >
+          View Appointments
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+        <button
+          className={activeTab === 'create' ? 'active' : ''}
+          onClick={() => setActiveTab('create')}
+        >
+          Create Appointment
+        </button>
+        <button
+          className={activeTab === 'search' ? 'active' : ''}
+          onClick={() => setActiveTab('search')}
+        >
+          Search by Phone
+        </button>
+      </nav>
+
+      <main className="app-main">
+        {activeTab === 'list' && <AppointmentList refreshTrigger={refreshTrigger} />}
+        {activeTab === 'create' && <AppointmentForm onSuccess={handleAppointmentCreated} />}
+        {activeTab === 'search' && <AppointmentSearch />}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
