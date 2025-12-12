@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import appointmentRouter from "./controller/appointmentController";
 import invoiceRouter from "./routes/invoiceRoutes";
+import customerRouter from "./routes/customerRoutes";
 
 dotenv.config();
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
@@ -22,6 +23,8 @@ app.use(express.json());
 app.use("/api/appointments", appointmentRouter);
 // Route cho invoice
 app.use("/api/invoices", invoiceRouter);
+// Route cho customer
+app.use("/api/customers", customerRouter);
 
 const PORT: number = Number(process.env.BACKEND_PORT) || 8000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

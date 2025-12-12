@@ -300,7 +300,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-drop function fnc_add_invoice_detail(INTEGER, VARCHAR, INTEGER, INTEGER, INTEGER, NUMERIC)
+select * from product
 CREATE OR REPLACE FUNCTION fnc_add_invoice_detail(
     p_invoice_id INTEGER,
     p_item_type  VARCHAR(20),
@@ -599,5 +599,61 @@ BEGIN
     LEFT JOIN employee e ON i.employee_id = e.employee_id
     LEFT JOIN promotion p ON i.promotion_id = p.promotion_id
     WHERE i.invoice_id = p_invoice_id;
+END;
+$$ LANGUAGE plpgsql;
+select * from inventory where warehouse_id = 1
+select * from warehouse where branch_id = 1
+select * from Product where product_id = 16
+CREATE OR REPLACE FUNCTION fnc_get_invoice_details(
+    p_invoice_id INTEGER
+)
+RETURNS TABLE (
+    line_no       INTEGER,
+    item_type     VARCHAR,
+    service_id    INTEGER,
+    product_id    INTEGER,
+    quantity      INTEGER,
+    unit_price    NUMERIC(18,2),
+    line_total    NUMERIC(18,2)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        id.line_no,
+        id.item_type,
+        id.service_id,
+        id.product_id,
+        id.quantity,
+        id.unit_price,
+        id.line_total
+    FROM invoice_detail id
+    WHERE id.invoice_id = p_invoice_id
+    ORDER BY id.line_no;
+END;
+$$ LANGUAGE plpgsql;
+
+// ===================================================
+//CUSTOMER
+// ===================================================
+
+CREATE OR REPLACE FUNCTION fnc_get_customer_by_phone(
+    p_phone VARCHAR
+)
+RETURNS TABLE (
+    customer_id   INTEGER,
+    name          VARCHAR,
+    phone         VARCHAR,
+    email         VARCHAR,
+    created_at    TIMESTAMP
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT c.customer_id,
+           c.name,
+           c.phone,
+           c.email,
+           c.created_at
+    FROM customer c
+    WHERE c.phone = p_phone;
 END;
 $$ LANGUAGE plpgsql;
