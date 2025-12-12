@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import appointmentRouter from "./controller/appointmentController";
 import invoiceRouter from "./routes/invoiceRoutes";
 import customerRouter from "./routes/customerRoutes";
+import branchRouter from "./routes/branchRoutes";
+import employeeRouter from "./routes/employeeRoutes";
 
 dotenv.config();
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
@@ -25,6 +27,10 @@ app.use("/api/appointments", appointmentRouter);
 app.use("/api/invoices", invoiceRouter);
 // Route cho customer
 app.use("/api/customers", customerRouter);
+// Route cho branch
+app.use("/api/branches", branchRouter);
+// Route cho employee
+app.use("/api/employees", employeeRouter);
 
 const PORT: number = Number(process.env.BACKEND_PORT) || 8000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
