@@ -1,15 +1,19 @@
+select * from inventory
+select * from warehouse
 select * from employee
 select * from branch
 select * from transfer_history
 select * from membership_tier
 select * from customer
 select * from pet
-select * from branch_service
 select * from appointment
 select * from appointment_service
 select * from product
 delete from branch_service
-
+select * from service
+select * from invoice
+select * from employee
+select * from promotion
 
 -- Appointment
 CREATE OR REPLACE FUNCTION fnc_insert_appointment(
@@ -229,4 +233,371 @@ BEGIN
 
 END;
 $$;
+select * from employee
+CREATE OR REPLACE FUNCTION fnc_add_invoice(
+    p_branch_id      INTEGER,
+    p_customer_id    INTEGER,
+    p_employee_id    INTEGER,
+    p_promotion_id   INTEGER,
+    p_payment_status VARCHAR(20)
+)
+RETURNS INTEGER AS $$
+DECLARE
+    -- alias biến để dễ đọc code hơn
+    v_branch_id      ALIAS FOR p_branch_id;
+    v_customer_id    ALIAS FOR p_customer_id;
+    v_employee_id    ALIAS FOR p_employee_id;
+    v_promotion_id   ALIAS FOR p_promotion_id;
+    v_payment_status ALIAS FOR p_payment_status;
 
+    v_invoice_id     INTEGER;
+    v_employee_branch_id INTEGER;
+    v_employee_position  VARCHAR;
+BEGIN
+    ------------------------------------------------------------------
+    -- 1) Kiểm tra employee có tồn tại và thuộc branch
+    ------------------------------------------------------------------
+    SELECT branch_id, position
+    INTO v_employee_branch_id, v_employee_position
+    FROM employee
+    WHERE employee_id = v_employee_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Employee % không tồn tại', v_employee_id;
+    END IF;
+
+    IF v_employee_branch_id <> v_branch_id THEN
+        RAISE EXCEPTION 'Employee % không thuộc Branch %', v_employee_id, v_branch_id;
+    END IF;
+
+    ------------------------------------------------------------------
+    -- 2) Kiểm tra position là Receptionist
+    ------------------------------------------------------------------
+    IF v_employee_position <> 'Receptionist' THEN
+        RAISE EXCEPTION 'Employee % không phải Receptionist', v_employee_id;
+    END IF;
+
+    ------------------------------------------------------------------
+    -- 3) Thêm invoice
+    ------------------------------------------------------------------
+    INSERT INTO invoice (
+        branch_id,
+        customer_id,
+        employee_id,
+        promotion_id,
+        payment_status
+    )
+    VALUES (
+        v_branch_id,
+        v_customer_id,
+        v_employee_id,
+        v_promotion_id,
+        v_payment_status
+    )
+    RETURNING invoice_id INTO v_invoice_id;
+
+    RETURN v_invoice_id;
+END;
+$$ LANGUAGE plpgsql;
+
+drop function fnc_add_invoice_detail(INTEGER, VARCHAR, INTEGER, INTEGER, INTEGER, NUMERIC)
+CREATE OR REPLACE FUNCTION fnc_add_invoice_detail(
+    p_invoice_id INTEGER,
+    p_item_type  VARCHAR(20),
+    p_service_id INTEGER,
+    p_product_id INTEGER,
+    p_quantity   INTEGER
+)
+RETURNS VOID AS $$
+DECLARE
+    -- alias parameter
+    v_invoice_id   ALIAS FOR p_invoice_id;
+    v_item_type    ALIAS FOR p_item_type;
+    v_service_id   ALIAS FOR p_service_id;
+    v_product_id   ALIAS FOR p_product_id;
+    v_quantity     ALIAS FOR p_quantity;
+
+    -- local variables
+    v_branch_id    INTEGER;
+    v_stock        INTEGER := 0;
+    v_line_no      INTEGER;
+    v_unit_price   NUMERIC(18,2);
+    v_line_total   NUMERIC(18,2);
+    v_service_available BOOLEAN;
+BEGIN
+    ------------------------------------------------------------------
+    -- 1) Lấy branch_id từ invoice
+    ------------------------------------------------------------------
+    SELECT i.branch_id
+    INTO v_branch_id
+    FROM invoice i
+    WHERE i.invoice_id = v_invoice_id;
+
+    IF v_branch_id IS NULL THEN
+        RAISE EXCEPTION 'Invoice % không tồn tại', v_invoice_id;
+    END IF;
+
+    ------------------------------------------------------------------
+    -- 2) Kiểm tra logic service/product
+    ------------------------------------------------------------------
+    IF v_item_type = 'Service' THEN
+        IF v_product_id IS NOT NULL THEN
+            RAISE EXCEPTION 'Service không được đi kèm product_id';
+        END IF;
+
+        -- Kiểm tra service có thuộc branch không
+        SELECT bs.is_available
+        INTO v_service_available
+        FROM branch_service bs
+        WHERE bs.branch_id = v_branch_id
+          AND bs.service_id = v_service_id;
+
+        IF NOT FOUND OR v_service_available = FALSE THEN
+            RAISE EXCEPTION 'Service % không khả dụng tại Branch %', v_service_id, v_branch_id;
+        END IF;
+
+        -- Lấy unit_price của service (ưu tiên price_override nếu có)
+        SELECT COALESCE(bs.price_override, s.base_price)
+        INTO v_unit_price
+        FROM service s
+        LEFT JOIN branch_service bs
+          ON bs.branch_id = v_branch_id AND bs.service_id = v_service_id
+        WHERE s.service_id = v_service_id;
+
+    ELSIF v_item_type = 'Product' THEN
+        IF v_service_id IS NOT NULL THEN
+            RAISE EXCEPTION 'Product không được đi kèm service_id';
+        END IF;
+
+        -- Kiểm tra tồn kho
+        SELECT COALESCE(SUM(inv.quantity), 0)
+        INTO v_stock
+        FROM inventory inv
+        JOIN warehouse w ON w.warehouse_id = inv.warehouse_id
+        WHERE w.branch_id = v_branch_id
+          AND inv.product_id = v_product_id;
+
+        IF v_stock < v_quantity THEN
+            RAISE EXCEPTION
+                'Không đủ tồn kho cho Product % tại Branch %, tồn kho = %, cần = %',
+                v_product_id, v_branch_id, v_stock, v_quantity;
+        END IF;
+
+        -- Lấy unit_price từ product
+        SELECT price
+        INTO v_unit_price
+        FROM product
+        WHERE product_id = v_product_id;
+
+    ELSE
+        RAISE EXCEPTION 'item_type phải là Service hoặc Product';
+    END IF;
+
+    ------------------------------------------------------------------
+    -- 3) Lấy line_no mới từ invoice_detail
+    ------------------------------------------------------------------
+    SELECT COALESCE(MAX(id.line_no), 0) + 1
+    INTO v_line_no
+    FROM invoice_detail id
+    WHERE id.invoice_id = v_invoice_id;
+
+    v_line_total := v_quantity * v_unit_price;
+
+    ------------------------------------------------------------------
+    -- 4) Thêm invoice_detail
+    ------------------------------------------------------------------
+    INSERT INTO invoice_detail (
+        invoice_id,
+        line_no,
+        item_type,
+        service_id,
+        product_id,
+        quantity,
+        unit_price,
+        line_total
+    )
+    VALUES (
+        v_invoice_id,
+        v_line_no,
+        v_item_type,
+        v_service_id,
+        v_product_id,
+        v_quantity,
+        v_unit_price,
+        v_line_total
+    );
+
+    ------------------------------------------------------------------
+    -- 5) Update lại tổng invoice
+    ------------------------------------------------------------------
+    PERFORM fnc_update_invoice_total(v_invoice_id);
+
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION fnc_update_invoice_total(
+    p_invoice_id INTEGER
+)
+RETURNS VOID AS $$
+DECLARE
+    -- alias parameter
+    v_invoice_id ALIAS FOR p_invoice_id;
+
+    -- variables
+    v_total            NUMERIC(18,2);
+    v_discount         NUMERIC(18,2) := 0;
+    v_final            NUMERIC(18,2);
+    v_promotion_value  NUMERIC(18,2);
+    v_promotion_type   VARCHAR(20);
+BEGIN
+    ------------------------------------------------------------------
+    -- 1) Tính tổng từ invoice_detail (dùng alias id)
+    ------------------------------------------------------------------
+    SELECT COALESCE(SUM(id.line_total), 0)
+    INTO v_total
+    FROM invoice_detail id
+    WHERE id.invoice_id = v_invoice_id;
+
+    ------------------------------------------------------------------
+    -- 2) Lấy thông tin promotion (dùng alias i, p)
+    ------------------------------------------------------------------
+    SELECT 
+        p.value,
+        p.promotion_type
+    INTO 
+        v_promotion_value,
+        v_promotion_type
+    FROM invoice i
+    LEFT JOIN promotion p 
+        ON i.promotion_id = p.promotion_id
+    WHERE i.invoice_id = v_invoice_id;
+
+    ------------------------------------------------------------------
+    -- 3) Tính discount
+    ------------------------------------------------------------------
+    IF v_promotion_type = 'Percent' THEN
+        v_discount := ROUND(v_total * (v_promotion_value / 100), 2);
+
+    ELSIF v_promotion_type = 'FixedAmount' THEN
+        v_discount := v_promotion_value;
+
+    ELSE
+        -- Không có promotion
+        v_discount := 0;
+    END IF;
+
+    ------------------------------------------------------------------
+    -- 4) Tính final_amount
+    ------------------------------------------------------------------
+    v_final := v_total - v_discount;
+    IF v_final < 0 THEN 
+        v_final := 0; 
+    END IF;
+
+    ------------------------------------------------------------------
+    -- 5) UPDATE invoice (dùng alias i)
+    ------------------------------------------------------------------
+    UPDATE invoice i
+    SET 
+        total_amount    = v_total,
+        discount_amount = v_discount,
+        final_amount    = v_final
+    WHERE i.invoice_id = v_invoice_id;
+
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fnc_get_invoice_list()
+RETURNS TABLE(
+    invoice_id      INTEGER,
+    branch_id       INTEGER,
+    branch_name     VARCHAR,
+    customer_id     INTEGER,
+    customer_name   VARCHAR,
+    employee_id     INTEGER,
+    employee_name   VARCHAR,
+    created_at      TIMESTAMP,
+    total_amount    NUMERIC(18,2),
+    discount_amount NUMERIC(18,2),
+    final_amount    NUMERIC(18,2),
+    promotion_id    INTEGER,
+    promotion_name  VARCHAR,
+    promotion_type  VARCHAR,
+    payment_status  VARCHAR(20)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        i.invoice_id,
+        i.branch_id,
+        b.name AS branch_name,
+        i.customer_id,
+        c.full_name AS customer_name,
+        i.employee_id,
+        e.full_name AS employee_name,
+        i.created_at,
+        i.total_amount,
+        i.discount_amount,
+        i.final_amount,
+        i.promotion_id,
+        p.promotion_name,
+        p.promotion_type,
+        i.payment_status
+    FROM invoice i
+    LEFT JOIN branch b ON i.branch_id = b.branch_id
+    LEFT JOIN customer c ON i.customer_id = c.customer_id
+    LEFT JOIN employee e ON i.employee_id = e.employee_id
+    LEFT JOIN promotion p ON i.promotion_id = p.promotion_id
+    ORDER BY i.created_at DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION fnc_get_invoice_by_id(
+    p_invoice_id INTEGER
+)
+RETURNS TABLE(
+    invoice_id      INTEGER,
+    branch_id       INTEGER,
+    branch_name     VARCHAR,
+    customer_id     INTEGER,
+    customer_name   VARCHAR,
+    employee_id     INTEGER,
+    employee_name   VARCHAR,
+    created_at      TIMESTAMP,
+    total_amount    NUMERIC(18,2),
+    discount_amount NUMERIC(18,2),
+    final_amount    NUMERIC(18,2),
+    promotion_id    INTEGER,
+    promotion_name  VARCHAR,
+    promotion_type  VARCHAR,
+    payment_status  VARCHAR(20)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        i.invoice_id,
+        i.branch_id,
+        b.name AS branch_name,
+        i.customer_id,
+        c.full_name AS customer_name,
+        i.employee_id,
+        e.full_name AS employee_name,
+        i.created_at,
+        i.total_amount,
+        i.discount_amount,
+        i.final_amount,
+        i.promotion_id,
+        p.promotion_name,
+        p.promotion_type,
+        i.payment_status
+    FROM invoice i
+    LEFT JOIN branch b ON i.branch_id = b.branch_id
+    LEFT JOIN customer c ON i.customer_id = c.customer_id
+    LEFT JOIN employee e ON i.employee_id = e.employee_id
+    LEFT JOIN promotion p ON i.promotion_id = p.promotion_id
+    WHERE i.invoice_id = p_invoice_id;
+END;
+$$ LANGUAGE plpgsql;
