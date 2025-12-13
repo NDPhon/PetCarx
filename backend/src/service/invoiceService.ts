@@ -4,6 +4,7 @@ import {
   getInvoiceListRepo,
   addInvoiceDetailsRepo,
   getInvoiceDetailsByIdRepo,
+  updateInvoicePaymentStatusRepo,
 } from "../repo/invoiceRepo";
 
 import { Invoice } from "../model/invoice";
@@ -54,4 +55,11 @@ export const getInvoiceDetailsByIdService = async (
   invoice_id: number
 ): Promise<any[]> => {
   return await getInvoiceDetailsByIdRepo(invoice_id);
+};
+
+export const updateInvoicePaymentStatusService = async (
+  invoice_id: number,
+  payment_status: string
+): Promise<Invoice | null> => {
+  return await updateInvoicePaymentStatusRepo(invoice_id, payment_status);
 };

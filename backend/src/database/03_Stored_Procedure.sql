@@ -324,17 +324,23 @@ DECLARE
     v_unit_price   NUMERIC(18,2);
     v_line_total   NUMERIC(18,2);
     v_service_available BOOLEAN;
+    v_payment_status VARCHAR(20);
 BEGIN
     ------------------------------------------------------------------
-    -- 1) Lấy branch_id từ invoice
+    -- 1) Lấy branch_id và payment_status từ invoice
     ------------------------------------------------------------------
-    SELECT i.branch_id
-    INTO v_branch_id
-    FROM invoice i
-    WHERE i.invoice_id = v_invoice_id;
+    SELECT branch_id, payment_status
+    INTO v_branch_id, v_payment_status
+    FROM invoice
+    WHERE invoice_id = v_invoice_id;
 
     IF v_branch_id IS NULL THEN
         RAISE EXCEPTION 'Invoice % không tồn tại', v_invoice_id;
+    END IF;
+
+    -- Kiểm tra trạng thái hóa đơn
+    IF v_payment_status <> 'Pending' THEN
+        RAISE EXCEPTION 'Chỉ được thêm sản phẩm/dịch vụ khi invoice ở trạng thái Pending, hiện tại = %', v_payment_status;
     END IF;
 
     ------------------------------------------------------------------
@@ -436,6 +442,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+select * from invoice
 
 CREATE OR REPLACE FUNCTION fnc_update_invoice_total(
     p_invoice_id INTEGER
@@ -631,6 +638,7 @@ BEGIN
     ORDER BY id.line_no;
 END;
 $$ LANGUAGE plpgsql;
+select * from invoice
 
 // ===================================================
 //CUSTOMER
@@ -657,3 +665,66 @@ BEGIN
     WHERE c.phone = p_phone;
 END;
 $$ LANGUAGE plpgsql;
+drop function update_invoice_status
+CREATE OR REPLACE FUNCTION fnc_update_invoice_status(
+    p_invoice_id INTEGER,
+    p_new_status VARCHAR
+)
+RETURNS VARCHAR AS $$
+DECLARE
+    v_old_status VARCHAR;
+    r_product RECORD;
+    v_inventory RECORD;
+    v_branch_id INTEGER;
+BEGIN
+    -- Lấy trạng thái hiện tại và chi nhánh của hóa đơn
+    SELECT payment_status, branch_id
+    INTO v_old_status, v_branch_id
+    FROM invoice
+    WHERE invoice_id = p_invoice_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Invoice ID % không tồn tại', p_invoice_id;
+    END IF;
+
+    -- Nếu trạng thái chuyển sang 'Paid', xử lý trừ inventory
+    IF p_new_status = 'Paid' THEN
+        FOR r_product IN
+            SELECT product_id, quantity
+            FROM invoice_detail
+            WHERE invoice_id = p_invoice_id
+              AND item_type = 'Product'
+        LOOP
+            -- Lấy kho thuộc chi nhánh có đủ tồn kho
+            SELECT i.*
+            INTO v_inventory
+            FROM inventory i
+            JOIN warehouse w ON i.warehouse_id = w.warehouse_id
+            WHERE i.product_id = r_product.product_id
+              AND w.branch_id = v_branch_id
+              AND i.quantity >= r_product.quantity
+            LIMIT 1;
+
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'Không đủ hàng trong kho chi nhánh cho sản phẩm ID %', r_product.product_id;
+            END IF;
+
+            -- Trừ số lượng
+            UPDATE inventory
+            SET quantity = quantity - r_product.quantity,
+                update_date = CURRENT_TIMESTAMP
+            WHERE inventory_id = v_inventory.inventory_id;
+        END LOOP;
+    END IF;
+
+    -- Cập nhật trạng thái hóa đơn
+    UPDATE invoice
+    SET payment_status = p_new_status
+    WHERE invoice_id = p_invoice_id;
+
+    RETURN p_new_status;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from inventory where product_id = 4
+select * from warehouse where branch_id = 1

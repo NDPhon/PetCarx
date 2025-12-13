@@ -4,6 +4,7 @@ import {
   getInvoiceListService,
   addInvoiceDetailsService,
   getInvoiceDetailsByIdService,
+  updateInvoicePaymentStatusService,
 } from "../service/invoiceService";
 
 import { Request, Response } from "express";
@@ -137,6 +138,31 @@ export const getInvoiceDetailsByIdController = async (
     });
   } catch (error: any) {
     console.error("Error fetching invoice details by ID:", error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+export const updateInvoicePaymentStatusController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { invoice_id, payment_status } = req.body;
+    const updatedInvoice = await updateInvoicePaymentStatusService(
+      invoice_id,
+      payment_status
+    );
+    res.status(200).json({
+      code: 200,
+      message: "Invoice payment status updated successfully",
+      data: updatedInvoice,
+    });
+  } catch (error: any) {
+    console.error("Error updating invoice payment status:", error);
     res.status(500).json({
       code: 500,
       message: error.message || "Internal Server Error",

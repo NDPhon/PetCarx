@@ -4,6 +4,7 @@ import {
   getInvoiceListController,
   addInvoiceDetailsController,
   getInvoiceDetailsByIdController,
+  updateInvoicePaymentStatusController,
 } from "../controller/invoiceController";
 
 import { Router } from "express";
@@ -35,4 +36,13 @@ router.get(
   "/get-invoice-details-by-id/:invoice_id",
   getInvoiceDetailsByIdController
 );
+
+/* ============================================================
+    UPDATE INVOICE PAYMENT STATUS
+============================================================ */
+router.patch(
+  "/update-invoice-payment-status",
+  updateInvoicePaymentStatusController
+);
+
 export default router;
