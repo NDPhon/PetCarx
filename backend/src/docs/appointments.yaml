@@ -1,0 +1,186 @@
+# Appointments API
+paths:
+  /api/appointments/add-appointment:
+    post:
+      tags:
+        - Appointments
+      summary: Tạo lịch hẹn mới
+      description: Tạo một lịch hẹn mới cho khách hàng
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Appointment"
+            example:
+              customer_id: 1
+              pet_id: 1
+              branch_id: 1
+              employee_id: 1
+              appointment_time: "2024-01-15T09:00:00"
+              status: "Pending"
+              channel: "Online"
+      responses:
+        "201":
+          description: Tạo lịch hẹn thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              example:
+                code: 201
+                message: "Appointment created successfully"
+                data:
+                  appointment_id: 1
+                  customer_id: 1
+                  pet_id: 1
+                  branch_id: 1
+                  employee_id: 1
+                  appointment_time: "2024-01-15T09:00:00"
+                  status: "Pending"
+                  channel: "Online"
+        "500":
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+  /api/appointments/get-appointments:
+    get:
+      tags:
+        - Appointments
+      summary: Lấy danh sách lịch hẹn
+      description: Lấy tất cả các lịch hẹn trong hệ thống
+      responses:
+        "200":
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server
+
+  /api/appointments/update-status:
+    patch:
+      tags:
+        - Appointments
+      summary: Cập nhật trạng thái lịch hẹn
+      description: Cập nhật trạng thái của một lịch hẹn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appointment_id:
+                  type: integer
+                  description: ID lịch hẹn
+                status:
+                  type: string
+                  description: Trạng thái mới
+              required:
+                - appointment_id
+                - status
+            example:
+              appointment_id: 1
+              status: "Confirmed"
+      responses:
+        "200":
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server
+
+  /api/appointments/find-by-phone:
+    post:
+      tags:
+        - Appointments
+      summary: Tìm lịch hẹn theo số điện thoại
+      description: Tìm kiếm các lịch hẹn dựa trên số điện thoại khách hàng
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  description: Số điện thoại khách hàng
+              required:
+                - phone
+            example:
+              phone: "0901234567"
+      responses:
+        "200":
+          description: Tìm kiếm thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server
+
+  /api/appointments/services/{appointment_id}:
+    get:
+      tags:
+        - Appointments
+      summary: Lấy danh sách dịch vụ của lịch hẹn
+      description: Lấy các dịch vụ được đăng ký trong một lịch hẹn
+      parameters:
+        - name: appointment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID lịch hẹn
+      responses:
+        "200":
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server
+
+  /api/appointments/add-service:
+    post:
+      tags:
+        - Appointments
+      summary: Thêm dịch vụ vào lịch hẹn
+      description: Thêm một dịch vụ vào lịch hẹn đã tồn tại
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appointment_id:
+                  type: integer
+                  description: ID lịch hẹn
+                service_id:
+                  type: integer
+                  description: ID dịch vụ
+              required:
+                - appointment_id
+                - service_id
+            example:
+              appointment_id: 1
+              service_id: 2
+      responses:
+        "200":
+          description: Thêm dịch vụ thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server

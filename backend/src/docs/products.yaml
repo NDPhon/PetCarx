@@ -1,0 +1,110 @@
+# Products API
+paths:
+  /api/products/get-all-vaccines:
+    get:
+      tags:
+        - Products
+      summary: Lấy tất cả vaccine
+      description: Lấy danh sách tất cả các loại vaccine trong hệ thống
+      responses:
+        "200":
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              example:
+                code: 200
+                message: "Fetched all vaccines successfully"
+                data:
+                  - product_id: 1
+                    product_name: "Vaccine dại"
+                    product_type: "Vaccine"
+                    unit: "Liều"
+                    price: 200000
+                    is_active: true
+        "500":
+          description: Lỗi server
+
+  /api/products/get-vaccines-by-branch/{branch_id}:
+    get:
+      tags:
+        - Products
+      summary: Lấy vaccine theo chi nhánh
+      description: Lấy danh sách vaccine có sẵn tại một chi nhánh cụ thể
+      parameters:
+        - name: branch_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID chi nhánh
+          example: 1
+      responses:
+        "200":
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server
+
+  /api/products/search-vaccine-by-name-in-branch:
+    post:
+      tags:
+        - Products
+      summary: Tìm vaccine theo tên trong chi nhánh
+      description: Tìm kiếm vaccine theo tên tại một chi nhánh cụ thể
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                branch_id:
+                  type: integer
+                  description: ID chi nhánh
+                vaccine_name:
+                  type: string
+                  description: Tên vaccine cần tìm
+              required:
+                - branch_id
+                - vaccine_name
+            example:
+              branch_id: 1
+              vaccine_name: "dại"
+      responses:
+        "200":
+          description: Tìm kiếm thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server
+
+  /api/products/get-products-by-branch/{branch_id}:
+    get:
+      tags:
+        - Products
+      summary: Lấy sản phẩm theo chi nhánh
+      description: Lấy danh sách tất cả sản phẩm có sẵn tại một chi nhánh cụ thể
+      parameters:
+        - name: branch_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID chi nhánh
+          example: 1
+      responses:
+        "200":
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: Lỗi server

@@ -1,0 +1,39 @@
+# Branches API
+paths:
+  /api/branches/get-branch-list:
+    get:
+      tags:
+        - Branches
+      summary: Lấy danh sách chi nhánh
+      description: Lấy tất cả các chi nhánh trong hệ thống
+      responses:
+        "200":
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              example:
+                code: 200
+                message: "Fetched branch list successfully"
+                data:
+                  - branch_id: 1
+                    name: "Chi nhánh Quận 1"
+                    address: "123 Nguyễn Huệ, Quận 1, TP.HCM"
+                    phone: "028-1234567"
+                    open_time: "08:00:00"
+                    close_time: "20:00:00"
+                    is_active: true
+                  - branch_id: 2
+                    name: "Chi nhánh Quận 3"
+                    address: "456 Võ Văn Tần, Quận 3, TP.HCM"
+                    phone: "028-7654321"
+                    open_time: "08:00:00"
+                    close_time: "21:00:00"
+                    is_active: true
+        "500":
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"

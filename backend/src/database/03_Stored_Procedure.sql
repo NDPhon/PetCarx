@@ -8,12 +8,15 @@ select * from customer
 select * from pet
 select * from appointment
 select * from appointment_service
-select * from product
 delete from branch_service
 select * from service
 select * from invoice
 select * from employee
 select * from promotion
+select * from product
+select * from warehouse
+select * from inventory
+
 
 -- Appointment
 CREATE OR REPLACE FUNCTION fnc_insert_appointment(
@@ -665,6 +668,7 @@ BEGIN
     WHERE c.phone = p_phone;
 END;
 $$ LANGUAGE plpgsql;
+
 drop function update_invoice_status
 CREATE OR REPLACE FUNCTION fnc_update_invoice_status(
     p_invoice_id INTEGER,
@@ -676,10 +680,11 @@ DECLARE
     r_product RECORD;
     v_inventory RECORD;
     v_branch_id INTEGER;
+    v_final_amount NUMERIC(18,2);
 BEGIN
-    -- Lấy trạng thái hiện tại và chi nhánh của hóa đơn
-    SELECT payment_status, branch_id
-    INTO v_old_status, v_branch_id
+    -- Lấy trạng thái hiện tại, chi nhánh và số tiền cuối cùng
+    SELECT payment_status, branch_id, final_amount
+    INTO v_old_status, v_branch_id, v_final_amount
     FROM invoice
     WHERE invoice_id = p_invoice_id;
 
@@ -687,15 +692,16 @@ BEGIN
         RAISE EXCEPTION 'Invoice ID % không tồn tại', p_invoice_id;
     END IF;
 
-    -- Nếu trạng thái chuyển sang 'Paid', xử lý trừ inventory
-    IF p_new_status = 'Paid' THEN
+    -- Nếu trạng thái chuyển sang 'Paid'
+    IF p_new_status = 'Paid' AND v_old_status <> 'Paid' THEN
+
+        -- Trừ tồn kho cho các sản phẩm
         FOR r_product IN
             SELECT product_id, quantity
             FROM invoice_detail
             WHERE invoice_id = p_invoice_id
               AND item_type = 'Product'
         LOOP
-            -- Lấy kho thuộc chi nhánh có đủ tồn kho
             SELECT i.*
             INTO v_inventory
             FROM inventory i
@@ -709,12 +715,27 @@ BEGIN
                 RAISE EXCEPTION 'Không đủ hàng trong kho chi nhánh cho sản phẩm ID %', r_product.product_id;
             END IF;
 
-            -- Trừ số lượng
             UPDATE inventory
             SET quantity = quantity - r_product.quantity,
                 update_date = CURRENT_TIMESTAMP
             WHERE inventory_id = v_inventory.inventory_id;
         END LOOP;
+
+        -- ✅ Thêm bản ghi thanh toán
+        INSERT INTO payment (
+            invoice_id,
+            paid_amount,
+            payment_method,
+            paid_at,
+            status
+        )
+        VALUES (
+            p_invoice_id,
+            v_final_amount,
+            'Cash',
+            CURRENT_TIMESTAMP,
+            'Completed'
+        );
     END IF;
 
     -- Cập nhật trạng thái hóa đơn
@@ -725,6 +746,287 @@ BEGIN
     RETURN p_new_status;
 END;
 $$ LANGUAGE plpgsql;
+select * from invoice
+select * from payment
+select * from fnc_update_invoice_status(2, 'Paid')
 
-select * from inventory where product_id = 4
-select * from warehouse where branch_id = 1
+CREATE OR REPLACE FUNCTION fnc_get_all_vaccine_by_branch()
+RETURNS TABLE (
+    branch_id     INTEGER,
+    branch_name   VARCHAR,
+    product_id    INTEGER,
+    product_name  VARCHAR,
+    price         NUMERIC,
+    expiry_date   DATE,
+    stock_quantity INTEGER
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        b.branch_id,
+        b.name AS branch_name,
+        p.product_id,
+        p.product_name,
+        p.price,
+        p.expiry_date,
+        COALESCE(SUM(i.quantity), 0)::INTEGER AS stock_quantity
+    FROM product p
+    JOIN inventory i  ON i.product_id = p.product_id
+    JOIN warehouse w  ON w.warehouse_id = i.warehouse_id
+    JOIN branch b     ON b.branch_id = w.branch_id
+    WHERE p.product_type = 'Vaccine'
+    GROUP BY
+        b.branch_id,
+        b.name,
+        p.product_id,
+        p.product_name,
+        p.price,
+        p.expiry_date
+    ORDER BY
+        b.name,
+        p.product_name;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fnc_get_vaccine_by_branch(
+    p_branch_id INTEGER
+)
+RETURNS TABLE (
+    product_id     INTEGER,
+    product_name   VARCHAR,
+    price          NUMERIC,
+    expiry_date    DATE,
+    total_stock    INTEGER
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.product_id,
+        p.product_name,
+        p.price,
+        p.expiry_date,
+        COALESCE(SUM(i.quantity), 0)::INTEGER AS total_stock
+    FROM product p
+    JOIN inventory i  ON i.product_id = p.product_id
+    JOIN warehouse w  ON w.warehouse_id = i.warehouse_id
+    WHERE p.product_type = 'Vaccine'
+      AND w.branch_id = p_branch_id
+    GROUP BY
+        p.product_id,
+        p.product_name,
+        p.price,
+        p.expiry_date
+    ORDER BY p.product_name;
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION fnc_search_vaccine_by_name_in_branch(
+    p_branch_id   INTEGER,
+    p_keyword     VARCHAR
+)
+RETURNS TABLE (
+    product_id     INTEGER,
+    product_name   VARCHAR,
+    price          NUMERIC,
+    expiry_date    DATE,
+    total_stock    INTEGER
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.product_id,
+        p.product_name,
+        p.price,
+        p.expiry_date,
+        COALESCE(SUM(i.quantity), 0)::INTEGER AS total_stock
+    FROM product p
+    JOIN inventory i  ON i.product_id = p.product_id
+    JOIN warehouse w  ON w.warehouse_id = i.warehouse_id
+    WHERE p.product_type = 'Vaccine'
+      AND w.branch_id = p_branch_id
+      AND p.product_name ILIKE '%' || p_keyword || '%'
+    GROUP BY
+        p.product_id,
+        p.product_name,
+        p.price,
+        p.expiry_date
+    ORDER BY p.product_name;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fnc_get_products_by_branch(
+    p_branch_id INTEGER
+)
+RETURNS TABLE (
+    product_id     INTEGER,
+    product_name   VARCHAR,
+    product_type   VARCHAR,
+    unit           VARCHAR,
+    price          NUMERIC,
+    expiry_date    DATE,
+    description    VARCHAR,
+    is_active      BOOLEAN,
+    total_stock    INTEGER
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.product_id,
+        p.product_name,
+        p.product_type,
+        p.unit,
+        p.price,
+        p.expiry_date,
+        p.description,
+        p.is_active,
+        COALESCE(SUM(i.quantity), 0)::INTEGER AS total_stock
+    FROM product p
+    LEFT JOIN inventory i ON i.product_id = p.product_id
+    LEFT JOIN warehouse w ON w.warehouse_id = i.warehouse_id
+    WHERE w.branch_id = p_branch_id
+    GROUP BY
+        p.product_id,
+        p.product_name,
+        p.product_type,
+        p.unit,
+        p.price,
+        p.expiry_date,
+        p.description,
+        p.is_active
+    ORDER BY p.product_name;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fnc_total_revenue(
+    p_start_date DATE,
+    p_end_date   DATE
+)
+RETURNS NUMERIC(18,2) AS $$
+DECLARE
+    v_total_revenue NUMERIC(18,2);
+BEGIN
+    SELECT COALESCE(SUM(p.paid_amount), 0)
+    INTO v_total_revenue
+    FROM payment p
+    WHERE p.status = 'Completed'
+      AND p.paid_at >= p_start_date and p.paid_at <= p_end_date;
+
+    RETURN v_total_revenue;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from fnc_get_payments_by_date('2025-01-01', '2025-12-31')
+
+drop function fnc_get_payments_by_date
+CREATE OR REPLACE FUNCTION fnc_get_payments_by_date(
+    p_start_date DATE,
+    p_end_date   DATE
+)
+RETURNS TABLE (
+    payment_id     INTEGER,
+    invoice_id     INTEGER,
+    branch_name    VARCHAR,
+    customer_name  VARCHAR,
+    paid_amount    NUMERIC(18,2),
+    payment_method VARCHAR(20),
+    paid_at        TIMESTAMP,
+    status         VARCHAR(20)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.payment_id,
+        p.invoice_id,
+        b.name        AS branch_name,
+        c.full_name   AS customer_name,
+        p.paid_amount,
+        p.payment_method,
+        p.paid_at,
+        p.status
+    FROM payment p
+    JOIN invoice  i ON p.invoice_id = i.invoice_id
+    JOIN branch   b ON i.branch_id  = b.branch_id
+    JOIN customer c ON i.customer_id = c.customer_id
+    WHERE p.status = 'Completed'
+      AND p.paid_at::DATE BETWEEN p_start_date AND p_end_date
+    ORDER BY p.paid_at;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from fnc_revenue_by_branch(1, '2025-01-01', '2025-12-31')
+
+CREATE OR REPLACE FUNCTION fnc_revenue_by_branch(
+    p_branch_id  INTEGER,
+    p_start_date DATE,
+    p_end_date   DATE
+)
+RETURNS TABLE (
+    branch_id     INTEGER,
+    branch_name   VARCHAR,
+    total_revenue NUMERIC(18,2),
+    total_payment BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        b.branch_id,
+        b.name AS branch_name,
+        COALESCE(SUM(p.paid_amount), 0) AS total_revenue,
+        COUNT(p.payment_id)             AS total_payment
+    FROM payment p
+    JOIN invoice  i ON p.invoice_id = i.invoice_id
+    JOIN branch   b ON i.branch_id  = b.branch_id
+    WHERE p.status = 'Completed'
+      AND i.branch_id = p_branch_id
+      AND p.paid_at::DATE BETWEEN p_start_date AND p_end_date
+    GROUP BY b.branch_id, b.name;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from fnc_get_payments_by_branch(1, '2025-01-01', '2025-12-31')
+
+CREATE OR REPLACE FUNCTION fnc_get_payments_by_branch(
+    p_branch_id  INTEGER,
+    p_start_date DATE,
+    p_end_date   DATE
+)
+RETURNS TABLE (
+    payment_id     INTEGER,
+    invoice_id     INTEGER,
+    branch_name    VARCHAR,
+    customer_name  VARCHAR,
+    paid_amount    NUMERIC(18,2),
+    payment_method VARCHAR(20),
+    paid_at        TIMESTAMP,
+    status         VARCHAR(20)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.payment_id,
+        p.invoice_id,
+        b.name        AS branch_name,
+        c.full_name   AS customer_name,
+        p.paid_amount,
+        p.payment_method,
+        p.paid_at,
+        p.status
+    FROM payment p
+    JOIN invoice  i ON p.invoice_id = i.invoice_id
+    JOIN branch   b ON i.branch_id  = b.branch_id
+    JOIN customer c ON i.customer_id = c.customer_id
+    WHERE p.status = 'Completed'
+      AND i.branch_id = p_branch_id
+      AND p.paid_at::DATE BETWEEN p_start_date AND p_end_date
+    ORDER BY p.paid_at;
+END;
+$$ LANGUAGE plpgsql;
