@@ -258,6 +258,7 @@ CREATE TABLE payment (
     status         VARCHAR(20)   NOT NULL,
     CONSTRAINT ck_payment_amount CHECK (paid_amount >= 0)
 );
+select * from payment
 
 -- 5.4 Feedback
 CREATE TABLE feedback (
