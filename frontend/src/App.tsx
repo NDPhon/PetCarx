@@ -17,6 +17,7 @@ import SalesForm from './pages/SalesForm'
 import InvoiceForm from './pages/InvoiceForm'
 import RevenueStats from './pages/RevenueStats'
 import SearchForm from './pages/SearchForm'
+import DemoLists from './pages/DemoLists'
 import Footer from './components/Footer'
 
 function App() {
@@ -60,6 +61,7 @@ function App() {
             <DropdownItem onClick={() => navigate('/invoice')}>Hóa đơn</DropdownItem>
             <DropdownItem onClick={() => navigate('/stats')}>Thống kê</DropdownItem>
             <DropdownItem onClick={() => navigate('/search')}>Tìm kiếm</DropdownItem>
+            <DropdownItem onClick={() => navigate('/demo')}>Demo Data</DropdownItem>
           </Dropdown>
           <NavbarLink href="/contact" active={location.pathname === '/contact'}>
             Liên hệ
@@ -85,6 +87,7 @@ function App() {
         <Route path="/stats" element={<RevenueStats />} />
         <Route path="/search" element={<SearchForm />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/demo" element={<DemoLists />} />
       </Routes>
 
       <Footer />

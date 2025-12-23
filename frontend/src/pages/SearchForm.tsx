@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../lib/api'
 
 function SearchForm() {
   const navigate = useNavigate()
@@ -8,26 +9,6 @@ function SearchForm() {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Mock data - in a real app, this would come from your backend
-  const mockData = {
-    pets: [
-      { id: 1, name: 'Mèo Mimi', type: 'Mèo', age: 2, owner: 'Nguyễn Văn A', phone: '0123-456-789' },
-      { id: 2, name: 'Chó Max', type: 'Chó', age: 3, owner: 'Trần Thị B', phone: '0987-654-321' },
-      { id: 3, name: 'Chim Kiwi', type: 'Chim', age: 1, owner: 'Lê Văn C', phone: '0456-789-123' },
-      { id: 4, name: 'Thỏ Bunny', type: 'Thỏ', age: 1, owner: 'Phạm Thị D', phone: '0789-123-456' }
-    ],
-    vaccines: [
-      { id: 1, name: 'Vaccine dại', type: 'Bắt buộc', price: 100000, stock: 50 },
-      { id: 2, name: 'Vaccine tổng hợp', type: 'Khuyến nghị', price: 150000, stock: 30 },
-      { id: 3, name: 'Vaccine ký sinh trùng', type: 'Phòng ngừa', price: 80000, stock: 40 }
-    ],
-    customers: [
-      { id: 1, name: 'Nguyễn Văn A', phone: '0123-456-789', email: 'nguyenvana@email.com', pets: 2 },
-      { id: 2, name: 'Trần Thị B', phone: '0987-654-321', email: 'tranthib@email.com', pets: 1 },
-      { id: 3, name: 'Lê Văn C', phone: '0456-789-123', email: 'levanc@email.com', pets: 3 },
-      { id: 4, name: 'Phạm Thị D', phone: '0789-123-456', email: 'phamthid@email.com', pets: 1 }
-    ]
-  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -37,7 +18,7 @@ function SearchForm() {
 
     setLoading(true)
     try {
-      const response = await fetch(`http://localhost:5000/api/search?type=${searchType}&query=${encodeURIComponent(searchQuery)}`)
+      const response = await fetch(`${API_BASE}/api/search?type=${searchType}&query=${encodeURIComponent(searchQuery)}`)
       if (response.ok) {
         const results = await response.json()
         setSearchResults(results)

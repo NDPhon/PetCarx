@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../lib/api'
 
 function InvoiceForm() {
   const navigate = useNavigate()
@@ -76,7 +77,7 @@ function InvoiceForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/invoices', {
+      const response = await fetch(`${API_BASE}/api/invoices`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

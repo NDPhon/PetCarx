@@ -1,13 +1,32 @@
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { API_BASE } from '../lib/api'
 
 function CareHistory() {
   const navigate = useNavigate()
+  const [records, setRecords] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const history = [
-    { id: 1, pet: 'Mèo Mimi', date: '2025-12-20', service: 'Khám tổng quát', notes: 'Khỏe mạnh' },
-    { id: 2, pet: 'Chó Max', date: '2025-12-18', service: 'Tiêm phòng', notes: 'Hoàn thành' },
-    { id: 3, pet: 'Chim Kiwi', date: '2025-12-15', service: 'Cắt tỉa', notes: 'Lông mượt' },
-  ]
+  useEffect(() => {
+    const fetchRecords = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`${API_BASE}/api/demo/medical-records`)
+        if (res.ok) {
+          const data = await res.json()
+          setRecords(data)
+        } else {
+          setRecords([])
+        }
+      } catch (err) {
+        console.error('Failed to fetch medical records:', err)
+        setRecords([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchRecords()
+  }, [])
 
   return (
     <main className="container mx-auto px-4 py-8 pt-16 relative">
@@ -24,32 +43,36 @@ function CareHistory() {
         Theo dõi lịch sử khám và điều trị.
       </p>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-              <th scope="col" className="px-6 py-3">ID</th>
-              <th scope="col" className="px-6 py-3">Thú cưng</th>
-              <th scope="col" className="px-6 py-3">Ngày</th>
-              <th scope="col" className="px-6 py-3">Dịch vụ</th>
-              <th scope="col" className="px-6 py-3">Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody>
-            {history.map((item, index) => (
-              <tr key={item.id} className={`border-b dark:border-gray-700 ${index % 2 === 0 ? 'bg-white' : 'bg-blue-50'} dark:bg-gray-800`}>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  {item.id}
-                </td>
-                <td className="px-6 py-4">{item.pet}</td>
-                <td className="px-6 py-4">{item.date}</td>
-                <td className="px-6 py-4">{item.service}</td>
-                <td className="px-6 py-4">{item.notes}</td>
+      {loading ? (
+        <div className="text-center py-12">Đang tải...</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-gray-500">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th className="px-6 py-3">ID</th>
+                <th className="px-6 py-3">Thú cưng</th>
+                <th className="px-6 py-3">Chủ nuôi</th>
+                <th className="px-6 py-3">Ngày</th>
+                <th className="px-6 py-3">Chẩn đoán</th>
+                <th className="px-6 py-3">Ghi chú</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {records.map((r, i) => (
+                <tr key={r.id || i} className={`border-b ${i % 2 === 0 ? 'bg-white' : 'bg-blue-50'}`}>
+                  <td className="px-6 py-4">{r.id}</td>
+                  <td className="px-6 py-4">{r.petName}</td>
+                  <td className="px-6 py-4">{r.ownerName}</td>
+                  <td className="px-6 py-4">{r.followUpDate || (r.created_at ? new Date(r.created_at).toLocaleDateString() : '')}</td>
+                  <td className="px-6 py-4">{r.diagnosis}</td>
+                  <td className="px-6 py-4">{r.notes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   )
 }

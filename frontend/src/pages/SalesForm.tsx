@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../lib/api'
 
 function SalesForm() {
   const navigate = useNavigate()
@@ -12,14 +13,22 @@ function SalesForm() {
     total: 0
   })
 
-  const products = [
-    { id: 'food', name: 'Thức ăn cho chó', price: 150000, stock: 50 },
-    { id: 'food_cat', name: 'Thức ăn cho mèo', price: 140000, stock: 45 },
-    { id: 'toy', name: 'Đồ chơi', price: 50000, stock: 30 },
-    { id: 'bed', name: 'Nệm cho thú cưng', price: 200000, stock: 20 },
-    { id: 'shampoo', name: 'Dầu gội', price: 80000, stock: 25 },
-    { id: 'collar', name: 'Vòng cổ', price: 30000, stock: 40 }
-  ]
+  const [products, setProducts] = useState<Array<any>>([])
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/products`)
+        if (res.ok) {
+          const data = await res.json()
+          setProducts(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch products:', err)
+      }
+    }
+    fetchProducts()
+  }, [])
 
   const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedProduct = products.find(p => p.id === e.target.value)
@@ -52,7 +61,7 @@ function SalesForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/sales', {
+      const response = await fetch(`${API_BASE}/api/sales`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

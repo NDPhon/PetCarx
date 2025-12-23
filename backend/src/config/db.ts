@@ -16,7 +16,7 @@ pool
   .then(() => console.log("✅ DB connected successfully"))
   .catch((err) => {
     console.error("❌ DB connection failed:", err);
-    process.exit(1);
+    // Do NOT exit process here so backend can run with mock routes during local dev
   });
 
 export default pool;

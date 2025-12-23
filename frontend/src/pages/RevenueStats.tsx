@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../lib/api'
 
 function RevenueStats() {
   const navigate = useNavigate()
@@ -17,7 +18,7 @@ function RevenueStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/stats/revenue')
+        const response = await fetch(`${API_BASE}/api/stats/revenue`)
         if (response.ok) {
           const data = await response.json()
           setStats(data)
