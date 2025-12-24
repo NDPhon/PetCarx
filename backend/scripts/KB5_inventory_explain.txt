@@ -1,0 +1,56 @@
+Task: KB5 - Inventory by branch (inventory/warehouse) - started at 2025-12-23T18:01:40.087Z
+
+-- DROP INDEX IF EXISTS ix_inventory_warehouse_product
+Dropped index (if existed)
+
+-- EXPLAIN ANALYZE (no index)
+EXPLAIN (no index) output:
+GroupAggregate  (cost=7.98..8.00 rows=1 width=45) (actual time=0.033..0.035 rows=0 loops=1)
+  Group Key: p.product_id
+  ->  Sort  (cost=7.98..7.99 rows=1 width=41) (actual time=0.032..0.033 rows=0 loops=1)
+        Sort Key: p.product_id
+        Sort Method: quicksort  Memory: 25kB
+        ->  Nested Loop  (cost=1.95..7.97 rows=1 width=41) (actual time=0.029..0.030 rows=0 loops=1)
+              ->  Hash Join  (cost=1.80..4.82 rows=19 width=45) (actual time=0.028..0.029 rows=0 loops=1)
+                    Hash Cond: (i.product_id = p.product_id)
+                    ->  Seq Scan on inventory i  (cost=0.00..2.57 rows=157 width=12) (actual time=0.011..0.011 rows=1 loops=1)
+                    ->  Hash  (cost=1.71..1.71 rows=7 width=37) (actual time=0.013..0.014 rows=7 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          ->  Seq Scan on product p  (cost=0.00..1.71 rows=7 width=37) (actual time=0.009..0.010 rows=7 loops=1)
+                                Filter: ((product_type)::text = 'Vaccine'::text)
+                                Rows Removed by Filter: 51
+              ->  Memoize  (cost=0.15..0.48 rows=1 width=4) (never executed)
+                    Cache Key: i.warehouse_id
+                    Cache Mode: logical
+                    ->  Index Scan using warehouse_pkey on warehouse w  (cost=0.14..0.47 rows=1 width=4) (never executed)
+                          Index Cond: (warehouse_id = i.warehouse_id)
+                          Filter: (branch_id = 1)
+Planning Time: 2.504 ms
+Execution Time: 0.072 ms
+
+-- CREATE INDEX ix_inventory_warehouse_product
+Created index (if not exists)
+
+-- EXPLAIN ANALYZE (with index)
+EXPLAIN (with index) output:
+GroupAggregate  (cost=2.83..14.28 rows=1 width=45) (actual time=0.025..0.026 rows=0 loops=1)
+  Group Key: p.product_id
+  ->  Nested Loop  (cost=2.83..14.27 rows=1 width=41) (actual time=0.024..0.025 rows=0 loops=1)
+        Join Filter: (i.warehouse_id = w.warehouse_id)
+        ->  Merge Join  (cost=2.83..2.88 rows=1 width=45) (actual time=0.024..0.025 rows=0 loops=1)
+              Merge Cond: (p.product_id = i.product_id)
+              ->  Sort  (cost=1.81..1.83 rows=7 width=37) (actual time=0.017..0.018 rows=7 loops=1)
+                    Sort Key: p.product_id
+                    Sort Method: quicksort  Memory: 25kB
+                    ->  Seq Scan on product p  (cost=0.00..1.71 rows=7 width=37) (actual time=0.011..0.012 rows=7 loops=1)
+                          Filter: ((product_type)::text = 'Vaccine'::text)
+                          Rows Removed by Filter: 51
+              ->  Sort  (cost=1.02..1.02 rows=1 width=12) (actual time=0.004..0.004 rows=1 loops=1)
+                    Sort Key: i.product_id
+                    Sort Method: quicksort  Memory: 25kB
+                    ->  Seq Scan on inventory i  (cost=0.00..1.01 rows=1 width=12) (actual time=0.003..0.003 rows=1 loops=1)
+        ->  Seq Scan on warehouse w  (cost=0.00..11.38 rows=1 width=4) (never executed)
+              Filter: (branch_id = 1)
+Planning Time: 0.284 ms
+Execution Time: 0.056 ms
+Task: KB5 - Inventory by branch (inventory/warehouse) - finished at 2025-12-23T18:01:40.345Z
