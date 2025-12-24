@@ -45,6 +45,19 @@ function Home() {
             </p>
           </Card>
         </div>
+
+        {/* Quick actions for 5 KB flows */}
+        <div className="text-center mt-12">
+          <h2 className="text-2xl font-bold mb-4 text-blue-800">Bắt đầu nhanh</h2>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+            <button onClick={() => navigate('/appointment-form')} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">📅 Đặt lịch (online)</button>
+            <button onClick={() => navigate('/appointment-list')} className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🗂️ Xem lịch đã đặt</button>
+            <button onClick={() => navigate('/walk-in')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🚶 Tiếp khách walk-in</button>
+            <button onClick={() => navigate('/medical-history')} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🩺 Lịch sử khám</button>
+            <button onClick={() => navigate('/inventory')} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🧪 Kho / Vắc-xin</button>
+            <button onClick={() => navigate('/stats')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">💰 Doanh thu</button>
+          </div>
+        </div>
       </div>
     </main>
   )

@@ -103,8 +103,9 @@ function AppointmentForm() {
       })
 
       if (response.ok) {
-        setSuccess({ show: true, message: 'Đặt lịch thành công!' })
-        setTimeout(() => navigate('/'), 1200)
+        const json = await response.json()
+        const appointmentId = json.data?.fnc_insert_appointment || json.data?.appointment_id || json.appointmentId || null
+        setAppointmentAdded({ show: true, appointmentId })
       } else {
         let msg = 'Có lỗi xảy ra khi đặt lịch!'
         try {
@@ -127,6 +128,10 @@ function AppointmentForm() {
 
   const [modal, setModal] = useState<{show:boolean,title?:string,message?:string,onConfirm?:()=>void,cancelText?:string}>({show:false})
   const [success, setSuccess] = useState<{show:boolean,message?:string}>({show:false})
+  const [appointmentAdded, setAppointmentAdded] = useState<{show:boolean,appointmentId?:number}>({show:false})
+  const [selectedServicesForAdd, setSelectedServicesForAdd] = useState<number[]>([])
+  const [addingServices, setAddingServices] = useState(false)
+  
   const hideModal = () => setModal({show:false})
 
   return (
@@ -187,9 +192,9 @@ function AppointmentForm() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-700 font-semibold mb-2">Dịch vụ</label>
-              <select name="serviceId" value={formData.serviceId} onChange={handleChange} className="w-full px-4 py-3 border rounded-lg" required>
-                <option value="">Chọn dịch vụ</option>
+              <label className="block text-gray-700 font-semibold mb-2">Dịch vụ <span className="text-gray-500 text-sm">(tùy chọn - có thể thêm sau)</span></label>
+              <select name="serviceId" value={formData.serviceId} onChange={handleChange} className="w-full px-4 py-3 border rounded-lg">
+                <option value="">-- Không chọn (thêm sau) --</option>
                 {services.map(s => <option key={s.service_id || s.id || s.serviceid} value={s.service_id || s.id || s.serviceid}>{s.name || s.servicename}</option>)}
               </select>
             </div>
@@ -226,6 +231,87 @@ function AppointmentForm() {
           </form>
                 {success.show && (
                   <div className="mt-4 p-4 bg-green-100 border border-green-300 rounded text-green-800 text-center">{success.message}</div>
+                )}
+                {appointmentAdded.show && (
+                  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                      <h3 className="text-2xl font-bold mb-4 text-green-600">✅ Đặt lịch thành công!</h3>
+                      <p className="mb-6 text-gray-700">Lịch khám đã được tạo. Bạn có muốn thêm dịch vụ không?</p>
+                      
+                      {/* Service selection */}
+                      <div className="mb-4 max-h-48 overflow-y-auto border rounded p-3">
+                        {services.map(s => (
+                          <label key={s.service_id || s.id || s.serviceid} className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={selectedServicesForAdd.includes(Number(s.service_id || s.id || s.serviceid))}
+                              onChange={(e) => {
+                                const id = Number(s.service_id || s.id || s.serviceid)
+                                if (e.target.checked) {
+                                  setSelectedServicesForAdd([...selectedServicesForAdd, id])
+                                } else {
+                                  setSelectedServicesForAdd(selectedServicesForAdd.filter(x => x !== id))
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded"
+                            />
+                            <span className="ml-2 text-gray-700">{s.name || s.servicename}</span>
+                          </label>
+                        ))}
+                      </div>
+                      
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setAppointmentAdded({show:false})
+                            navigate('/appointment-list')
+                          }}
+                          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                        >
+                          Bỏ qua
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (selectedServicesForAdd.length === 0) {
+                              setAppointmentAdded({show:false})
+                              navigate('/appointment-list')
+                              return
+                            }
+                            setAddingServices(true)
+                            try {
+                              const addServicesPayload = {
+                                appointment_id: appointmentAdded.appointmentId,
+                                service_ids: selectedServicesForAdd
+                              }
+                              const addRes = await fetch(`${API_BASE}/api/appointments/${appointmentAdded.appointmentId}/add-services`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(addServicesPayload)
+                              })
+                              if (addRes.ok) {
+                                setAppointmentAdded({show:false})
+                                setSuccess({ show: true, message: '✅ Đặt lịch và thêm dịch vụ thành công!' })
+                                setTimeout(() => navigate('/appointment-list'), 1500)
+                              } else {
+                                alert('Lỗi thêm dịch vụ, nhưng lịch đã được tạo')
+                                setAppointmentAdded({show:false})
+                                navigate('/appointment-list')
+                              }
+                            } catch (e) {
+                              alert('Lỗi thêm dịch vụ, nhưng lịch đã được tạo')
+                              setAppointmentAdded({show:false})
+                              navigate('/appointment-list')
+                            }
+                            setAddingServices(false)
+                          }}
+                          disabled={addingServices}
+                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded"
+                        >
+                          {addingServices ? '⏳' : '✅'} Thêm dịch vụ
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
                 {modal.show && (
                   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

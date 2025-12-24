@@ -21,6 +21,8 @@ import SearchForm from './pages/SearchForm'
 import DemoLists from './pages/DemoLists'
 import MedicalHistory from './pages/MedicalHistory'
 import Inventory from './pages/Inventory'
+import AppointmentList from './pages/AppointmentList'
+import WalkInAppointment from './pages/WalkInAppointment'
 import Footer from './components/Footer'
 
 function App() {
@@ -58,8 +60,11 @@ function App() {
             Dịch vụ
           </NavbarLink>
           <Dropdown label="Quản lý" inline>
-            <DropdownItem onClick={() => navigate('/quick-appointment')}>Đặt lịch</DropdownItem>
+            <DropdownItem onClick={() => navigate('/appointment-form')}>Đặt lịch (online)</DropdownItem>
+            <DropdownItem onClick={() => navigate('/appointment-list')}>Xem lịch khám</DropdownItem>
+            <DropdownItem onClick={() => navigate('/walk-in')}>Tiếp khách walk-in</DropdownItem>
             <DropdownItem onClick={() => navigate('/exam-form')}>Khám bệnh</DropdownItem>
+            <DropdownItem onClick={() => navigate('/medical-history')}>Lịch sử khám</DropdownItem>
             <DropdownItem onClick={() => navigate('/sales')}>Bán hàng</DropdownItem>
             <DropdownItem onClick={() => navigate('/invoice')}>Hóa đơn</DropdownItem>
             <DropdownItem onClick={() => navigate('/inventory')}>Kho / Vắc-xin</DropdownItem>
@@ -84,7 +89,9 @@ function App() {
         <Route path="/services/vet" element={<VetConsultation />} />
         <Route path="/services/exam" element={<MedicalExam />} />
         <Route path="/services/vaccine" element={<Vaccination />} />
-        <Route path="/appointment" element={<AppointmentForm />} />
+        <Route path="/appointment-form" element={<AppointmentForm />} />
+        <Route path="/appointment-list" element={<AppointmentList />} />
+        <Route path="/walk-in" element={<WalkInAppointment />} />
         <Route path="/quick-appointment" element={<QuickAppointment />} />
         <Route path="/exam-form" element={<MedicalExamForm />} />
         <Route path="/medical-history" element={<MedicalHistory />} />

@@ -67,16 +67,21 @@ function VetConsultation() {
           </div>
         </div>
 
-        {/* Contact Section */}
+        {/* Contact & Quick Links Section */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-green-200 text-center">
           <h2 className="text-3xl font-bold mb-6 text-green-800">Đặt lịch tư vấn</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Hãy liên hệ với chúng tôi để được tư vấn và đặt lịch khám cho thú cưng của bạn
           </p>
-          <button onClick={() => navigate('/quick-appointment')} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
-            📞 Đặt lịch ngay
-          </button>
-          <p className="text-gray-600 mt-4">Hotline: (028) 1234-5678</p>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-4">
+            <button onClick={() => navigate('/appointment-form')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">📅 Đặt lịch (online)</button>
+            <button onClick={() => navigate('/appointment-list')} className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🗂️ Xem lịch đã đặt</button>
+            <button onClick={() => navigate('/walk-in')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🚶 Tiếp khách walk-in</button>
+            <button onClick={() => navigate('/medical-history')} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🩺 Lịch sử khám</button>
+            <button onClick={() => navigate('/inventory')} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🧪 Kho / Vắc-xin</button>
+            <button onClick={() => navigate('/stats')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">💰 Doanh thu</button>
+          </div>
+          <p className="text-gray-600 mt-2">Hotline: (028) 1234-5678</p>
         </div>
       </div>
     </main>

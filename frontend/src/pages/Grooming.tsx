@@ -68,9 +68,17 @@ function Grooming() {
         </div>
 
         <div className="text-center">
-          <button onClick={() => navigate('/quick-appointment')} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
-            📞 Đặt lịch ngay
-          </button>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+            <button onClick={() => navigate('/quick-appointment')} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
+              📞 Đặt lịch ngay
+            </button>
+            <button onClick={() => navigate('/appointment-list')} className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
+              📅 Xem lịch đã đặt
+            </button>
+            <button onClick={() => navigate('/inventory')} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
+              🧪 Kho vắc-xin / sản phẩm
+            </button>
+          </div>
           <p className="text-gray-600 mt-4">Hotline: (028) 1234-5678</p>
         </div>
       </div>

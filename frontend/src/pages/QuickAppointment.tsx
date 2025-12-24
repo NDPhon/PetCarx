@@ -89,30 +89,59 @@ function QuickAppointment() {
   const hideModal = () => setModal({ show:false })
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="w-full max-w-lg bg-white p-6 rounded shadow">
-        <h2 className="text-2xl font-bold mb-4">Đặt lịch nhanh</h2>
+    <main className="min-h-screen bg-gray-50">
+      {/* Header with back button */}
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-pink-500 shadow-2xl border-b-4 border-red-800">
+        <div className="container mx-auto px-4 py-6 flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 bg-yellow-300 hover:bg-yellow-200 text-red-900 px-10 py-4 rounded-lg shadow-2xl transition-all font-black text-xl hover:scale-110"
+          >
+            ← Quay lại
+          </button>
+          <h1 className="text-5xl font-black text-white drop-shadow-xl">⚡ Đặt lịch nhanh</h1>
+          <div className="w-24"></div>
+        </div>
+      </div>
+      
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center">
+        <form onSubmit={handleSubmit} className="w-full max-w-2xl bg-white p-8 rounded-xl shadow-lg border-2 border-indigo-100">
+          <h2 className="text-4xl font-black mb-6 text-red-600">📋 Thông tin lịch khám</h2>
         <div className="grid grid-cols-1 gap-4">
-          <input name="petName" value={data.petName} onChange={handleChange} placeholder="Tên thú cưng" className="p-2 border rounded" required />
-          <input name="ownerName" value={data.ownerName} onChange={handleChange} placeholder="Tên chủ" className="p-2 border rounded" required />
-          <input name="phone" value={data.phone} onChange={handleChange} placeholder="SĐT" className="p-2 border rounded" />
-          <select name="service" value={data.service} onChange={handleChange} className="p-2 border rounded">
+          <input name="petName" value={data.petName} onChange={handleChange} placeholder="Tên thú cưng" className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none" required />
+          <input name="ownerName" value={data.ownerName} onChange={handleChange} placeholder="Tên chủ" className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none" required />
+          <input name="phone" value={data.phone} onChange={handleChange} placeholder="SĐT" className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none" />
+          <select name="service" value={data.service} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none bg-white">
             <option value="vet">Khám thú y</option>
             <option value="grooming">Grooming</option>
             <option value="vaccination">Tiêm phòng</option>
           </select>
-          <select name="branchId" value={data.branchId} onChange={handleChange} className="p-2 border rounded">
+          <select name="branchId" value={data.branchId} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none bg-white">
             <option value="">Chọn chi nhánh</option>
             {branches.map(b => <option key={b.branch_id || b.id || b.branchid} value={b.branch_id || b.id || b.branchid}>{b.name}</option>)}
           </select>
           <div className="flex gap-2">
-            <input type="date" name="date" value={data.date} onChange={handleChange} className="p-2 border rounded flex-1" required />
-            <input type="time" name="time" value={data.time} onChange={handleChange} className="p-2 border rounded w-32" required />
+            <input type="date" name="date" value={data.date} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none flex-1" required />
+            <input type="time" name="time" value={data.time} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none w-40" required />
           </div>
-          <textarea name="notes" value={data.notes} onChange={handleChange} placeholder="Ghi chú" className="p-2 border rounded" rows={3} />
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Đặt lịch nhanh</button>
+          <textarea name="notes" value={data.notes} onChange={handleChange} placeholder="Ghi chú" className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none" rows={3} />
+          <button type="submit" className="bg-gradient-to-r from-red-600 to-pink-500 hover:from-red-700 hover:to-pink-600 text-white px-8 py-4 rounded-lg font-black text-xl shadow-lg transition-all hover:scale-105">
+            ✓ Đặt lịch nhanh
+          </button>
         </div>
-      </form>
+        </form>
+      
+      {/* Link to appointment list */}
+      <div className="mt-8 text-center">
+        <button
+          onClick={() => navigate('/appointment-list')}
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white px-10 py-5 rounded-lg font-black text-xl shadow-lg transition-all hover:scale-105"
+        >
+          📋 Xem danh sách lịch đã đặt
+        </button>
+      </div>
+      </div>
+
       {modal.show && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
