@@ -22,11 +22,11 @@ function AddPet() {
       <div className="max-w-md mx-auto">
         <form className="flex flex-col gap-4">
           <div>
-            <Label htmlFor="name" value="Tên thú cưng" />
+            <Label htmlFor="name">Tên thú cưng</Label>
             <TextInput id="name" type="text" placeholder="Nhập tên thú cưng" required />
           </div>
           <div>
-            <Label htmlFor="type" value="Loại thú cưng" />
+            <Label htmlFor="type">Loại thú cưng</Label>
             <Select id="type" required>
               <option value="">Chọn loại</option>
               <option value="dog">Chó</option>
@@ -36,11 +36,11 @@ function AddPet() {
             </Select>
           </div>
           <div>
-            <Label htmlFor="age" value="Tuổi" />
+            <Label htmlFor="age">Tuổi</Label>
             <TextInput id="age" type="number" placeholder="Nhập tuổi" required />
           </div>
           <div>
-            <Label htmlFor="owner" value="Chủ sở hữu" />
+            <Label htmlFor="owner">Chủ sở hữu</Label>
             <TextInput id="owner" type="text" placeholder="Nhập tên chủ" required />
           </div>
           <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Thêm thú cưng</Button>

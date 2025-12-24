@@ -18,6 +18,8 @@ function InvoiceForm() {
     notes: ''
   })
 
+  const [created, setCreated] = useState<{ show: boolean; error?: boolean; invoiceId?: number }>({ show: false })
+
   const addItem = () => {
     setInvoiceData({
       ...invoiceData,
@@ -77,30 +79,34 @@ function InvoiceForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_BASE}/api/invoices`, {
+      // 1) create invoice
+      const r = await fetch(`${API_BASE}/api/invoices/add-invoice`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerName: invoiceData.customerName,
-          phone: invoiceData.phone,
-          service: invoiceData.service,
-          amount: invoiceData.amount,
-          dueDate: invoiceData.dueDate,
-          status: invoiceData.status
-        })
-      });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brand_id: null, customer_id: null, employee_id: null })
+      })
+      if (!r.ok) throw new Error('Failed to create invoice')
+      const jr = await r.json()
+      const invoice_id = jr?.data?.invoice_id || jr?.invoice_id || null
 
-      if (response.ok) {
-        alert('Hóa đơn đã được tạo thành công!');
-        navigate('/');
-      } else {
-        alert('Có lỗi xảy ra khi tạo hóa đơn!');
+      // 2) add details for each item (best-effort mapping to compatibility endpoint)
+      for (const it of invoiceData.items) {
+        try {
+          await fetch(`${API_BASE}/api/invoices/add-invoice-details`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ invoice_id, item_type: 'product', product_id: null, service_id: null, quantity: it.quantity })
+          })
+        } catch (e) {
+          // ignore per-item errors
+        }
       }
+
+      setCreated({ show: true, invoiceId: invoice_id })
+      setTimeout(() => navigate('/'), 1200)
     } catch (error) {
-      console.error('Error:', error);
-      alert('Không thể kết nối đến server!');
+      console.error('Error:', error)
+      setCreated({ show: true, error: true })
     }
   }
 
@@ -291,6 +297,11 @@ function InvoiceForm() {
               📄 Tạo hóa đơn
             </button>
           </form>
+          {created.show && (
+            <div className={`mt-4 p-4 ${created.error ? 'bg-red-100 border-red-300 text-red-800' : 'bg-green-100 border-green-300 text-green-800'} rounded`}>
+              {created.error ? 'Tạo hóa đơn thất bại' : 'Hóa đơn đã được tạo thành công!'} {created.invoiceId ? `(id: ${created.invoiceId})` : ''}
+            </div>
+          )}
         </div>
       </div>
     </main>

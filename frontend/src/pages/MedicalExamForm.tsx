@@ -12,6 +12,7 @@ function MedicalExamForm() {
     treatment: '',
     medications: '',
     notes: '',
+    veterinarian: '',
     followUpDate: ''
   })
 

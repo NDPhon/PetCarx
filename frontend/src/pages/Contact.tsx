@@ -48,15 +48,15 @@ function Contact() {
               </h5>
               <form className="flex flex-col gap-4">
                 <div>
-                  <Label htmlFor="name" value="Tên của bạn" />
+                  <Label htmlFor="name">Tên của bạn</Label>
                   <TextInput id="name" type="text" placeholder="Nhập tên" required className="bg-white" />
                 </div>
                 <div>
-                  <Label htmlFor="email" value="Email" />
+                  <Label htmlFor="email">Email</Label>
                   <TextInput id="email" type="email" placeholder="Nhập email" required className="bg-white" />
                 </div>
                 <div>
-                  <Label htmlFor="message" value="Tin nhắn" />
+                  <Label htmlFor="message">Tin nhắn</Label>
                   <Textarea id="message" placeholder="Nhập tin nhắn" required rows={4} className="bg-white" />
                 </div>
                 <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Gửi</Button>

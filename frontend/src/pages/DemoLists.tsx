@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 function DemoLists() {
   const navigate = useNavigate()
   const [invoices, setInvoices] = useState<any[]>([])
-  const [sales, setSales] = useState<any[]>([])
+  const [sales, _setSales] = useState<any[]>([])
   const [appointments, setAppointments] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -13,14 +13,22 @@ function DemoLists() {
     const fetchAll = async () => {
       setLoading(true)
       try {
-        const [invRes, salesRes, apptRes] = await Promise.all([
-          fetch(`${API_BASE}/api/demo/invoices`),
-          fetch(`${API_BASE}/api/demo/sales`),
-          fetch(`${API_BASE}/api/demo/appointments`)
+        const [invRes, apptRes] = await Promise.all([
+          fetch(`${API_BASE}/api/invoices/get-invoice-list`),
+          fetch(`${API_BASE}/api/appointments/get-appointments`)
         ])
-        if (invRes.ok) setInvoices(await invRes.json())
-        if (salesRes.ok) setSales(await salesRes.json())
-        if (apptRes.ok) setAppointments(await apptRes.json())
+        try {
+          if (invRes.ok) {
+            const j = await invRes.json()
+            setInvoices(j.data || j)
+          }
+        } catch (e) { console.warn('Invoices parse failed', e) }
+        try {
+          if (apptRes.ok) {
+            const j = await apptRes.json()
+            setAppointments(j.data || j)
+          }
+        } catch (e) { console.warn('Appointments parse failed', e) }
       } catch (err) {
         console.error('Failed to fetch demo lists', err)
       } finally {
@@ -51,11 +59,11 @@ function DemoLists() {
             </thead>
             <tbody>
               {invoices.map((i) => (
-                <tr key={i.id} className="border-b">
-                  <td className="px-4 py-2">{i.invoiceNumber || i.invoicenumber}</td>
-                  <td className="px-4 py-2">{i.customerName || i.customername}</td>
-                  <td className="px-4 py-2">{i.date ? new Date(i.date).toLocaleDateString() : ''}</td>
-                  <td className="px-4 py-2">{i.total}</td>
+                <tr key={i.invoice_id || i.id} className="border-b">
+                  <td className="px-4 py-2">{i.invoice_id || i.invoiceNumber || i.invoicenumber}</td>
+                  <td className="px-4 py-2">{i.customer_name || i.customerName || i.customername}</td>
+                  <td className="px-4 py-2">{(i.created_at || i.date) ? new Date(i.created_at || i.date).toLocaleDateString() : ''}</td>
+                  <td className="px-4 py-2">{i.total_amount || i.total}</td>
                 </tr>
               ))}
             </tbody>

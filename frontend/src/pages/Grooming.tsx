@@ -68,7 +68,7 @@ function Grooming() {
         </div>
 
         <div className="text-center">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
+          <button onClick={() => navigate('/quick-appointment')} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
             📞 Đặt lịch ngay
           </button>
           <p className="text-gray-600 mt-4">Hotline: (028) 1234-5678</p>

@@ -5,7 +5,7 @@ import { API_BASE } from '../lib/api'
 function RevenueStats() {
   const navigate = useNavigate()
 
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<any>({
     totalRevenue: 0,
     monthlyRevenue: 0,
     dailyRevenue: 0,
@@ -92,7 +92,7 @@ function RevenueStats() {
                     <span className="mr-3">🏆</span> Dịch vụ bán chạy
                   </h2>
                   <div className="space-y-4">
-                    {stats.topServices.map((service, index) => (
+                    {stats.topServices.map((service: any, index: number) => (
                       <div key={index} className="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
                         <div className="flex justify-between items-center mb-2">
                           <h3 className="font-semibold text-emerald-800">{service.name}</h3>
@@ -112,7 +112,7 @@ function RevenueStats() {
                     <span className="mr-3">📊</span> Doanh thu theo tháng
                   </h2>
                   <div className="space-y-4">
-                    {stats.monthlyData.map((data, index) => (
+                    {stats.monthlyData.map((data: any, index: number) => (
                       <div key={index} className="flex items-center">
                         <div className="w-24 text-gray-600 font-medium">{data.month}</div>
                         <div className="flex-1 mx-4">
@@ -120,7 +120,7 @@ function RevenueStats() {
                             <div
                               className="bg-emerald-500 h-6 rounded-full transition-all duration-500"
                               style={{
-                                width: `${(data.revenue / Math.max(...stats.monthlyData.map(d => d.revenue))) * 100}%`
+                                width: `${(data.revenue / Math.max(...stats.monthlyData.map((d: any) => d.revenue))) * 100}%`
                               }}
                             ></div>
                           </div>

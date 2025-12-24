@@ -12,12 +12,15 @@ import VetConsultation from './pages/VetConsultation'
 import MedicalExam from './pages/MedicalExam'
 import Vaccination from './pages/Vaccination'
 import AppointmentForm from './pages/AppointmentForm'
+import QuickAppointment from './pages/QuickAppointment'
 import MedicalExamForm from './pages/MedicalExamForm'
 import SalesForm from './pages/SalesForm'
 import InvoiceForm from './pages/InvoiceForm'
 import RevenueStats from './pages/RevenueStats'
 import SearchForm from './pages/SearchForm'
 import DemoLists from './pages/DemoLists'
+import MedicalHistory from './pages/MedicalHistory'
+import Inventory from './pages/Inventory'
 import Footer from './components/Footer'
 
 function App() {
@@ -55,10 +58,11 @@ function App() {
             Dịch vụ
           </NavbarLink>
           <Dropdown label="Quản lý" inline>
-            <DropdownItem onClick={() => navigate('/appointment')}>Đặt lịch</DropdownItem>
+            <DropdownItem onClick={() => navigate('/quick-appointment')}>Đặt lịch</DropdownItem>
             <DropdownItem onClick={() => navigate('/exam-form')}>Khám bệnh</DropdownItem>
             <DropdownItem onClick={() => navigate('/sales')}>Bán hàng</DropdownItem>
             <DropdownItem onClick={() => navigate('/invoice')}>Hóa đơn</DropdownItem>
+            <DropdownItem onClick={() => navigate('/inventory')}>Kho / Vắc-xin</DropdownItem>
             <DropdownItem onClick={() => navigate('/stats')}>Thống kê</DropdownItem>
             <DropdownItem onClick={() => navigate('/search')}>Tìm kiếm</DropdownItem>
             <DropdownItem onClick={() => navigate('/demo')}>Demo Data</DropdownItem>
@@ -81,7 +85,10 @@ function App() {
         <Route path="/services/exam" element={<MedicalExam />} />
         <Route path="/services/vaccine" element={<Vaccination />} />
         <Route path="/appointment" element={<AppointmentForm />} />
+        <Route path="/quick-appointment" element={<QuickAppointment />} />
         <Route path="/exam-form" element={<MedicalExamForm />} />
+        <Route path="/medical-history" element={<MedicalHistory />} />
+        <Route path="/inventory" element={<Inventory />} />
         <Route path="/sales" element={<SalesForm />} />
         <Route path="/invoice" element={<InvoiceForm />} />
         <Route path="/stats" element={<RevenueStats />} />

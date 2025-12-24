@@ -73,7 +73,7 @@ function VetConsultation() {
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Hãy liên hệ với chúng tôi để được tư vấn và đặt lịch khám cho thú cưng của bạn
           </p>
-          <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
+          <button onClick={() => navigate('/quick-appointment')} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg rounded-lg shadow-lg transition-colors">
             📞 Đặt lịch ngay
           </button>
           <p className="text-gray-600 mt-4">Hotline: (028) 1234-5678</p>
