@@ -1,29 +1,22 @@
 import {
-  searchVaccineByNameInBranchRepo,
-  getALlVaccinesRepo,
-  getVaccinesByBranchRepo,
-  getProductByBranchRepo,
+  getProductsByBranchIdRepo,
+  searchProductByNameInBranchRepo,
+  getALlProductsRepo,
 } from "../repo/productRepo";
 
-export const getAllVaccinesService = async (): Promise<any[]> => {
-  return await getALlVaccinesRepo();
-};
-
-export const getVaccinesByBranchService = async (
-  branch_id: number
-): Promise<any[]> => {
-  return await getVaccinesByBranchRepo(branch_id);
-};
-
-export const searchVaccineByNameInBranchService = async (
+export const getProductsByBranchIdService = async (
   branch_id: number,
-  vaccine_name: string
+  product_type: string
 ): Promise<any[]> => {
-  return await searchVaccineByNameInBranchRepo(branch_id, vaccine_name);
+  return await getProductsByBranchIdRepo(branch_id, product_type);
 };
 
-export const getProductsByBranchService = async (
-  branch_id: number
+export const searchProductByNameInBranchService = async (
+  branch_id: number,
+  name: string
 ): Promise<any[]> => {
-  return await getProductByBranchRepo(branch_id);
+  return await searchProductByNameInBranchRepo(branch_id, name);
+};
+export const getALlProductsService = async (): Promise<any[]> => {
+  return await getALlProductsRepo();
 };

@@ -5,7 +5,8 @@ export const totalRevenueService = async (
   start_date: string,
   end_date: string
 ): Promise<any> => {
-  return await totalRevenueRepo(branch_id, start_date, end_date);
+  let result = await totalRevenueRepo(branch_id, start_date, end_date);
+  return result;
 };
 export const paymentsService = async (
   branch_id: number,

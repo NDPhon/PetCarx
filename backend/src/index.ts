@@ -8,6 +8,8 @@ import branchRouter from "./routes/branchRoutes";
 import employeeRouter from "./routes/employeeRoutes";
 import productRouter from "./routes/productRoutes";
 import analyzeRouter from "./routes/analyzeRoutes";
+import petRoute from "./routes/petRoutes";
+import serviceRoute from "./routes/serviceRoutes";
 
 dotenv.config();
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
@@ -37,9 +39,12 @@ app.use("/api/employees", employeeRouter);
 app.use("/api/products", productRouter);
 // Route cho analyze
 app.use("/api/analyze", analyzeRouter);
+// Route cho pet
+app.use("/api/pets", petRoute);
+// Route cho service
+app.use("/api/services", serviceRoute);
 
 const PORT: number = Number(process.env.BACKEND_PORT) || 8000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📚 Swagger docs available at http://localhost:${PORT}/api-docs`);
 });

@@ -1,18 +1,19 @@
 import {
-  getInfoCustomerByPhoneController,
-  addCustomerController,
-} from "../controller/customerController";
+  addPetController,
+  getPetsByCustomerIdController,
+} from "../controller/petController";
 import { Router } from "express";
 const router = Router();
-
 /* ============================================================
-    GET CUSTOMER INFO BY PHONE  
+   ADD NEW PET
 ============================================================ */
-router.get("/get-customer-by-phone/:phone", getInfoCustomerByPhoneController);
-
+router.post("/add-pet", addPetController);
 /* ============================================================
-    ADD NEW CUSTOMER  
+   GET PETS BY CUSTOMER ID
 ============================================================ */
-router.post("/add-customer", addCustomerController);
+router.get(
+  "/get-pets-by-customer-id/:customer_id",
+  getPetsByCustomerIdController
+);
 
 export default router;

@@ -8,7 +8,6 @@ select * from customer
 select * from pet
 select * from appointment
 select * from appointment_service
-delete from branch_service
 select * from service
 select * from invoice
 select * from employee
@@ -16,6 +15,7 @@ select * from promotion
 select * from product
 select * from warehouse
 select * from inventory
+select * from branch_service
 
 
 -- Appointment
@@ -668,8 +668,8 @@ BEGIN
     WHERE c.phone = p_phone;
 END;
 $$ LANGUAGE plpgsql;
-
 drop function update_invoice_status
+select * from 
 CREATE OR REPLACE FUNCTION fnc_update_invoice_status(
     p_invoice_id INTEGER,
     p_new_status VARCHAR
@@ -746,11 +746,12 @@ BEGIN
     RETURN p_new_status;
 END;
 $$ LANGUAGE plpgsql;
-select * from invoice
-select * from payment
-select * from fnc_update_invoice_status(2, 'Paid')
-
-CREATE OR REPLACE FUNCTION fnc_get_all_vaccine_by_branch()
+select * from inventory
+select * from product
+insert into inventory ( quantity, warehouse_id, product_id)
+values(100, 1, 1)
+select * from fnc_get_all_by_branch()
+CREATE OR REPLACE FUNCTION fnc_get_all_by_branch()
 RETURNS TABLE (
     branch_id     INTEGER,
     branch_name   VARCHAR,
@@ -776,7 +777,6 @@ BEGIN
     JOIN inventory i  ON i.product_id = p.product_id
     JOIN warehouse w  ON w.warehouse_id = i.warehouse_id
     JOIN branch b     ON b.branch_id = w.branch_id
-    WHERE p.product_type = 'Vaccine'
     GROUP BY
         b.branch_id,
         b.name,
@@ -789,9 +789,10 @@ BEGIN
         p.product_name;
 END;
 $$;
-
-CREATE OR REPLACE FUNCTION fnc_get_vaccine_by_branch(
-    p_branch_id INTEGER
+drop function fnc_get_vaccine_by_branch
+CREATE OR REPLACE FUNCTION fnc_get_product_by_branch(
+    p_branch_id     INTEGER,
+    p_product_type  VARCHAR DEFAULT NULL
 )
 RETURNS TABLE (
     product_id     INTEGER,
@@ -813,8 +814,8 @@ BEGIN
     FROM product p
     JOIN inventory i  ON i.product_id = p.product_id
     JOIN warehouse w  ON w.warehouse_id = i.warehouse_id
-    WHERE p.product_type = 'Vaccine'
-      AND w.branch_id = p_branch_id
+    WHERE w.branch_id = p_branch_id
+      AND (p_product_type IS NULL OR p.product_type = p_product_type)
     GROUP BY
         p.product_id,
         p.product_name,
@@ -824,10 +825,14 @@ BEGIN
 END;
 $$;
 
-
-CREATE OR REPLACE FUNCTION fnc_search_vaccine_by_name_in_branch(
-    p_branch_id   INTEGER,
-    p_keyword     VARCHAR
+select * from fnc_get_product_by_branch(1, 'Vaccine')
+select * from inventory
+select * from warehouse
+select * from product
+drop function fnc_search_vaccine_by_name
+CREATE OR REPLACE FUNCTION fnc_search_vaccine_by_name(
+    p_keyword     VARCHAR,
+	p_branch_id   INTEGER DEFAULT NULL
 )
 RETURNS TABLE (
     product_id     INTEGER,
@@ -849,8 +854,7 @@ BEGIN
     FROM product p
     JOIN inventory i  ON i.product_id = p.product_id
     JOIN warehouse w  ON w.warehouse_id = i.warehouse_id
-    WHERE p.product_type = 'Vaccine'
-      AND w.branch_id = p_branch_id
+    WHERE (w.branch_id = p_branch_id OR p_branch_id IS NULL)
       AND p.product_name ILIKE '%' || p_keyword || '%'
     GROUP BY
         p.product_id,
@@ -860,7 +864,7 @@ BEGIN
     ORDER BY p.product_name;
 END;
 $$;
-
+select * from fnc_search_vaccine_by_name('Bor', 1)
 CREATE OR REPLACE FUNCTION fnc_get_products_by_branch(
     p_branch_id INTEGER
 )
@@ -924,7 +928,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-select * from fnc_get_payments_by_date('2025-01-01', '2025-12-31')
+select * from fnc_total_revenue('2025-01-01', '2025-12-31')
 
 drop function fnc_get_payments_by_date
 CREATE OR REPLACE FUNCTION fnc_get_payments_by_date(
@@ -1030,3 +1034,32 @@ BEGIN
     ORDER BY p.paid_at;
 END;
 $$ LANGUAGE plpgsql;
+drop function fnc_get_services_by_branch_id
+CREATE OR REPLACE FUNCTION fnc_get_services_by_branch_id(
+    p_branch_id INTEGER
+)
+RETURNS TABLE (
+    service_id      INTEGER,
+    service_name    VARCHAR,
+    description     VARCHAR,
+    price           NUMERIC(18,2),
+    is_available    boolean
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        s.service_id,
+        s.service_name,
+        s.description,
+        s.base_price,
+        bs.is_available
+    FROM branch_service bs
+    JOIN service s 
+        ON s.service_id = bs.service_id
+    WHERE bs.branch_id = p_branch_id
+      AND s.is_active = TRUE;
+END;
+$$;
+select * from fnc_get_services_by_branch_id(1)

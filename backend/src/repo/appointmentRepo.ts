@@ -3,11 +3,11 @@ import { Appointment } from "../model/appointment";
 import { Service } from "../model/service";
 
 export interface IAppointmentResult {
-  fnc_insert_appointment: number;
+  appointment_id: number;
 }
 
 export const insertAppointmentRepo = async (
-  appt: Appointment & { service_ids?: number[] }
+  appt: Appointment
 ): Promise<IAppointmentResult> => {
   const query = `
     SELECT * FROM fnc_insert_appointment(

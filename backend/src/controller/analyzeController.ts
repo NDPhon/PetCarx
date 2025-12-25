@@ -18,7 +18,7 @@ export const totalRevenueController = async (
     res.status(200).json({
       code: 200,
       message: "Fetched total revenue successfully",
-      data: { revenue, payments },
+      data: { revenue: revenue, payments: payments },
     });
   } catch (error: any) {
     console.error("Error fetching total revenue:", error);

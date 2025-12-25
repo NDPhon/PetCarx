@@ -1,4 +1,7 @@
-import { getEmployeeReceptionistListController } from "../controller/employeeController";
+import {
+  getEmployeeReceptionistListController,
+  getEmployeeDoctorListController,
+} from "../controller/employeeController";
 import { Router } from "express";
 
 const router = Router();
@@ -8,5 +11,10 @@ const router = Router();
 router.get(
   "/get-employee-receptionist-list/:branch_id",
   getEmployeeReceptionistListController
+);
+
+router.get(
+  "/get-employee-doctor-list/:branch_id",
+  getEmployeeDoctorListController
 );
 export default router;

@@ -19,7 +19,7 @@ export const totalRevenueRepo = async (
         `;
   const values = [start_date, end_date];
   const res = await pool.query(query, values);
-  return res.rows[0];
+  return res.rows[0].fnc_total_revenue;
 };
 
 export const paymentsRepo = async (
