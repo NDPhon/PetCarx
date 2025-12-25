@@ -68,8 +68,8 @@ function VetConsultation() {
         </div>
 
         {/* Contact & Quick Links Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-green-200 text-center">
-          <h2 className="text-3xl font-bold mb-6 text-green-800">Đặt lịch tư vấn</h2>
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-8 border-red-500 text-center">
+          <h2 className="text-3xl font-bold mb-6 text-red-600">Đặt lịch tư vấn</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Hãy liên hệ với chúng tôi để được tư vấn và đặt lịch khám cho thú cưng của bạn
           </p>
@@ -81,7 +81,7 @@ function VetConsultation() {
             <button onClick={() => navigate('/inventory')} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">🧪 Kho / Vắc-xin</button>
             <button onClick={() => navigate('/stats')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">💰 Doanh thu</button>
           </div>
-          <p className="text-gray-600 mt-2">Hotline: (028) 1234-5678</p>
+          <p className="text-red-600 font-black text-3xl mt-4 bg-yellow-200 py-3 px-6 rounded-xl inline-block">📞 Hotline: (028) 1234-5678</p>
         </div>
       </div>
     </main>

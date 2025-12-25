@@ -135,7 +135,7 @@ function QuickAppointment() {
       <div className="mt-8 text-center">
         <button
           onClick={() => navigate('/appointment-list')}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white px-10 py-5 rounded-lg font-black text-xl shadow-lg transition-all hover:scale-105"
+          className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-10 py-5 rounded-lg font-black text-2xl shadow-2xl transition-all hover:scale-105 border-4 border-green-600"
         >
           📋 Xem danh sách lịch đã đặt
         </button>

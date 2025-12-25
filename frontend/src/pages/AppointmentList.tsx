@@ -259,7 +259,7 @@ function AppointmentList() {
             </button>
             <button
               onClick={() => navigate('/quick-appointment')}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg transition-colors font-black text-xl border-4 border-green-600 shadow-2xl"
             >
               ⚡ Đặt lịch nhanh
             </button>

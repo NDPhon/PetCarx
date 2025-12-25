@@ -79,7 +79,7 @@ function Grooming() {
               🧪 Kho vắc-xin / sản phẩm
             </button>
           </div>
-          <p className="text-gray-600 mt-4">Hotline: (028) 1234-5678</p>
+          <p className="text-red-600 font-black text-3xl mt-4 bg-yellow-200 py-3 px-6 rounded-xl inline-block">📞 Hotline: (028) 1234-5678</p>
         </div>
       </div>
     </main>
