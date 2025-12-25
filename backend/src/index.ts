@@ -25,4 +25,8 @@ app.use("/api/appointments", appointmentRouter);
 app.use('/api', mockRoutes);
 
 const PORT: number = Number(process.env.BACKEND_PORT) || 8000;
+// Health check endpoint
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -8,9 +8,12 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const pool = new pg_1.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false,
-    },
+    ssl: process.env.NODE_ENV === 'production' || (process.env.DATABASE_URL || '').includes('sslmode')
+        ? { rejectUnauthorized: false }
+        : false,
+    keepAlive: true,
+    idleTimeoutMillis: 30000,
+    max: 10,
 });
 // Test kết nối
 pool
@@ -21,19 +24,5 @@ pool
     process.exit(1);
 });
 exports.default = pool;
-// Hàm check bảng
-async function checkTable() {
-    try {
-        const res = await pool.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public';
-    `);
-        console.log(res.rows);
-    }
-    catch (err) {
-        console.error("Error checking tables:", err);
-    }
-}
-checkTable();
+// Startup table listing removed to prevent connection issues
 //# sourceMappingURL=db.js.map
