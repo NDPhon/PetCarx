@@ -1155,7 +1155,9 @@ RETURNS TABLE (
     status           VARCHAR,
     customer_name    VARCHAR,
     customer_phone   VARCHAR,
-    branch_name      VARCHAR
+    branch_name      VARCHAR,
+	doctor_name		 VARCHAR,
+	pet_name 		 VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
@@ -1167,17 +1169,21 @@ BEGIN
         a.status,
         c.full_name AS customer_name,
         c.phone     AS customer_phone,
-        b.name      AS branch_name
+        b.name      AS branch_name,
+		e.full_name AS doctor_name,
+		p.pet_name
     FROM appointment a
     JOIN customer c ON a.customer_id = c.customer_id
     JOIN branch   b ON a.branch_id   = b.branch_id
+	JOIN employee e ON e.employee_id = a.employee_id
+	JOIN pet p ON p.pet_id = a.pet_id
     WHERE c.phone ILIKE '%' || p_phone || '%'
       AND (p_branch_id IS NULL OR a.branch_id = p_branch_id)
     ORDER BY
         a.appointment_time DESC;
 END;
 $$;
-
+select * from pet
 CREATE OR REPLACE FUNCTION fnc_get_pets_examined_by_doctor(
     p_employee_id INTEGER
 )
@@ -1420,6 +1426,6 @@ BEGIN
     ORDER BY i.created_at DESC;
 END;
 $$;
-select * from customer where customer_id = 9
+select * from customer 
 SELECT * 
 FROM fnc_get_invoices_by_customer_phone('0920000009', 1);
