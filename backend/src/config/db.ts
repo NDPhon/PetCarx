@@ -1,38 +1,32 @@
-import { Pool } from "pg";
-import dotenv from "dotenv";
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('sslmode')
+    ? { rejectUnauthorized: false }
+    : false,
+  keepAlive: true,
+  idleTimeoutMillis: 30000,
+  max: 10,
 });
 
-// Test kết nối
+pool.on('error', (err) => {
+  console.error('PG pool error:', err);
+});
+
 pool
   .connect()
-  .then(() => console.log("✅ DB connected successfully"))
+  .then((c) => {
+    c.release();
+    console.log('✅ DB connected successfully');
+  })
   .catch((err) => {
-    console.error("❌ DB connection failed:", err);
-    process.exit(1);
+    console.error('❌ DB connection failed:', err);
   });
 
+// Removed startup check to avoid premature connection termination and noisy logs
+
 export default pool;
-
-// Hàm check bảng
-async function checkTable() {
-  try {
-    const res = await pool.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public';
-    `);
-    console.log(res.rows);
-  } catch (err) {
-    console.error("Error checking tables:", err);
-  }
-}
-
-checkTable();

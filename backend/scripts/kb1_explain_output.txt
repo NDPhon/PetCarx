@@ -1,0 +1,50 @@
+KB1 EXPLAIN ANALYZE - started at 2025-12-23T16:49:12.633Z
+
+-- DROP INDEX IF EXISTS ix_appointment_branch_time_status;
+Dropped index (if existed)
+
+-- EXPLAIN ANALYZE (no index)
+EXPLAIN (no index) output:
+Nested Loop  (cost=19.55..31.23 rows=1 width=315) (actual time=0.680..0.682 rows=0 loops=1)
+  Join Filter: (e.employee_id = a.employee_id)
+  ->  Nested Loop  (cost=19.55..29.66 rows=1 width=308) (actual time=0.680..0.682 rows=0 loops=1)
+        ->  Nested Loop  (cost=19.41..21.49 rows=1 width=94) (actual time=0.680..0.681 rows=0 loops=1)
+              Join Filter: (p.pet_id = a.pet_id)
+              ->  Hash Join  (cost=19.41..21.48 rows=1 width=93) (actual time=0.680..0.681 rows=0 loops=1)
+                    Hash Cond: (c.customer_id = a.customer_id)
+                    ->  Seq Scan on customer c  (cost=0.00..1.77 rows=77 width=15) (actual time=0.679..0.679 rows=0 loops=1)
+                    ->  Hash  (cost=19.40..19.40 rows=1 width=86) (never executed)
+                          ->  Seq Scan on appointment a  (cost=0.00..19.40 rows=1 width=86) (never executed)
+                                Filter: ((branch_id = 1) AND ((status)::text = 'Confirmed'::text) AND ((appointment_time)::date = '2025-01-10'::date))
+              ->  Seq Scan on pet p  (cost=0.00..0.00 rows=1 width=9) (never executed)
+        ->  Index Scan using branch_pkey on branch b  (cost=0.14..8.16 rows=1 width=222) (never executed)
+              Index Cond: (branch_id = 1)
+  ->  Seq Scan on employee e  (cost=0.00..1.25 rows=25 width=15) (never executed)
+Planning Time: 26.451 ms
+Execution Time: 0.758 ms
+
+-- CREATE INDEX ix_appointment_branch_time_status;
+Created index
+
+-- EXPLAIN ANALYZE (with index)
+EXPLAIN (with index) output:
+Nested Loop  (cost=8.34..20.01 rows=1 width=315) (actual time=0.008..0.009 rows=0 loops=1)
+  Join Filter: (e.employee_id = a.employee_id)
+  ->  Nested Loop  (cost=8.34..18.45 rows=1 width=308) (actual time=0.008..0.008 rows=0 loops=1)
+        ->  Nested Loop  (cost=8.20..10.28 rows=1 width=94) (actual time=0.007..0.008 rows=0 loops=1)
+              Join Filter: (p.pet_id = a.pet_id)
+              ->  Hash Join  (cost=8.20..10.26 rows=1 width=93) (actual time=0.007..0.008 rows=0 loops=1)
+                    Hash Cond: (c.customer_id = a.customer_id)
+                    ->  Seq Scan on customer c  (cost=0.00..1.77 rows=77 width=15) (actual time=0.007..0.007 rows=0 loops=1)
+                    ->  Hash  (cost=8.18..8.18 rows=1 width=86) (never executed)
+                          ->  Index Scan using ix_appointment_branch_time_status on appointment a  (cost=0.15..8.18 rows=1 width=86) (never executed)
+                                Index Cond: ((branch_id = 1) AND ((status)::text = 'Confirmed'::text))
+                                Filter: ((appointment_time)::date = '2025-01-10'::date)
+              ->  Seq Scan on pet p  (cost=0.00..0.00 rows=1 width=9) (never executed)
+        ->  Index Scan using branch_pkey on branch b  (cost=0.14..8.16 rows=1 width=222) (never executed)
+              Index Cond: (branch_id = 1)
+  ->  Seq Scan on employee e  (cost=0.00..1.25 rows=25 width=15) (never executed)
+Planning Time: 1.201 ms
+Execution Time: 0.043 ms
+
+KB1 EXPLAIN ANALYZE - finished at 2025-12-23T16:49:15.341Z
