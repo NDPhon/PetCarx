@@ -5,7 +5,7 @@ select * from branch
 select * from transfer_history
 select * from membership_tier
 select * from customer
-select * from pet
+select * from pet where customer_id = 5 
 select * from appointment
 select * from reminder
 select * from appointment_service
@@ -17,6 +17,7 @@ select * from product
 select * from warehouse
 select * from inventory
 select * from branch_service
+
 
 
 -- Appointment
@@ -346,8 +347,8 @@ BEGIN
     ------------------------------------------------------------------
     -- 2) Kiểm tra position là Receptionist
     ------------------------------------------------------------------
-    IF v_employee_position <> 'Sales' OR v_employee_position <> 'Receptionist' OR v_employee_position <> 'BranchManager' THEN
-        RAISE EXCEPTION 'Employee % không phải Receptionist', v_employee_id;
+    IF v_employee_position <> 'Sales' AND v_employee_position <> 'Receptionist' AND v_employee_position <> 'BranchManager' THEN
+        RAISE EXCEPTION 'Employee % không phải Receptionist || Sales || Branch Manager', v_employee_id;
     END IF;
     ------------------------------------------------------------------
     -- 3) Thêm invoice
@@ -844,7 +845,7 @@ BEGIN
         p.product_name;
 END;
 $$;
-drop function fnc_get_vaccine_by_branch
+
 CREATE OR REPLACE FUNCTION fnc_get_product_by_branch(
     p_branch_id     INTEGER,
     p_product_type  VARCHAR DEFAULT NULL
@@ -959,7 +960,7 @@ BEGIN
     ORDER BY p.product_name;
 END;
 $$;
-drop function fnc_revenue_by_branch
+
 CREATE OR REPLACE FUNCTION fnc_revenue_by_branch(
     
     p_start_date DATE,
@@ -991,8 +992,7 @@ BEGIN
     ORDER BY b.name;
 END;
 $$;
-select * from fnc_get_payments_by_branch(1, '2025-01-01', '2025-12-31')
-drop function fnc_get_payments_by_branch
+
 CREATE OR REPLACE FUNCTION fnc_get_payments_by_branch(
     p_branch_id  INTEGER,
     p_start_date DATE,
@@ -1067,7 +1067,6 @@ BEGIN
 	  AND (p_service_type IS NULL OR p_service_type = s.service_type);
 END;
 $$;
-select * from fnc_get_services_by_branch_id(2, 'Vaccination')
 
 CREATE OR REPLACE FUNCTION fnc_get_all_services_by_branch()
 RETURNS TABLE (
@@ -1141,10 +1140,7 @@ BEGIN
         s.service_name;
 END;
 $$;
-select * from fnc_search_service_by_name('Exam', 1)
-select * from fnc_find_appointments_by_phone('0920000839')
-drop function fnc_find_appointments_by_phone
-select * from appointment
+
 CREATE OR REPLACE FUNCTION fnc_find_appointments_by_phone(
     p_phone     VARCHAR,
     p_branch_id INTEGER DEFAULT NULL
@@ -1183,7 +1179,7 @@ BEGIN
         a.appointment_time DESC;
 END;
 $$;
-select * from pet
+
 CREATE OR REPLACE FUNCTION fnc_get_pets_examined_by_doctor(
     p_employee_id INTEGER
 )
@@ -1219,9 +1215,7 @@ BEGIN
         last_exam_date DESC;
 END;
 $$;
-select * from fnc_get_pets_examined_by_doctor(14)
 
-drop FUNCTION fnc_get_medical_record_detail
 CREATE OR REPLACE FUNCTION fnc_get_medical_history_by_pet_and_doctor(
     p_pet_id       INTEGER,
     p_employee_id  INTEGER
@@ -1262,10 +1256,6 @@ BEGIN
 END;
 $$;
 
-select * from employee
-SELECT * FROM fnc_get_medical_history_by_pet_and_doctor(412, 12);
-
-
 CREATE OR REPLACE FUNCTION fnc_get_medical_record_detail(
     p_record_id INTEGER
 )
@@ -1298,8 +1288,6 @@ BEGIN
     WHERE mr.medical_record_id = p_record_id;
 END;
 $$;
-SELECT *
-FROM fnc_get_medical_record_detail(12);
 
 CREATE OR REPLACE FUNCTION fnc_get_prescription_by_medical_record(
     p_medical_record_id INTEGER
@@ -1384,15 +1372,6 @@ BEGIN
 END;
 $$;
 
-SELECT * FROM fnc_get_doctor_busy_schedule(12, '2025-01-31', '2025-12-10');
-select * from invoice where invoice_id = 15001
-select * from invoice where customer_id = 9
-select * from employee where branch_id = 1
-select * from branch_service where branch_id = 1
-select * from invoice_detail where invoice_id = 15001
-select * from inventory where product_id = 5
-select * from warehouse where branch_id = 5
-
 CREATE OR REPLACE FUNCTION fnc_get_invoices_by_customer_phone(
     p_phone     VARCHAR,
     p_branch_id INTEGER DEFAULT NULL
@@ -1426,6 +1405,3 @@ BEGIN
     ORDER BY i.created_at DESC;
 END;
 $$;
-select * from customer 
-SELECT * 
-FROM fnc_get_invoices_by_customer_phone('0920000009', 1);

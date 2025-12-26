@@ -1,16 +1,12 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import flowbiteReact from "flowbite-react/plugin/vite";
 
-// https://vite.dev/config/
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), flowbiteReact()],
+  plugins: [react()],
   server: {
     port: 3000,
-    open: true,
-  },
-  build: {
-    outDir: "dist",
-  },
+    strictPort: true,
+    host: true
+  }
 });
