@@ -5,6 +5,7 @@ import {
   addInvoiceDetailsService,
   getInvoiceDetailsByIdService,
   updateInvoicePaymentStatusService,
+  getInvoicesByCustomerPhoneService,
 } from "../service/invoiceService";
 
 import { Request, Response } from "express";
@@ -163,6 +164,28 @@ export const updateInvoicePaymentStatusController = async (
     });
   } catch (error: any) {
     console.error("Error updating invoice payment status:", error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+export const getInvoicesByCustomerPhoneController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { phone, branch_id } = req.body;
+    const invoices = await getInvoicesByCustomerPhoneService(phone, branch_id);
+    res.status(200).json({
+      code: 200,
+      message: "Fetched invoices successfully",
+      data: invoices,
+    });
+  } catch (error: any) {
+    console.error("Error fetching invoices by customer phone:", error);
     res.status(500).json({
       code: 500,
       message: error.message || "Internal Server Error",

@@ -33,8 +33,9 @@ RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    v_appointment_id INTEGER;
-    v_pet_customer_id INTEGER;
+    v_appointment_id   INTEGER;
+    v_pet_customer_id  INTEGER;
+    v_employee_position VARCHAR;
 BEGIN
     -- Kiểm tra status hợp lệ
     IF p_status NOT IN ('Pending','Confirmed','Completed','Cancelled') THEN
@@ -47,24 +48,52 @@ BEGIN
     END IF;
 
     -- Kiểm tra pet có thuộc customer
-    SELECT customer_id INTO v_pet_customer_id
+    SELECT customer_id
+    INTO v_pet_customer_id
     FROM pet
     WHERE pet_id = p_pet_id;
 
     IF v_pet_customer_id IS NULL THEN
         RAISE EXCEPTION 'Pet ID % does not exist', p_pet_id;
     ELSIF v_pet_customer_id <> p_customer_id THEN
-        RAISE EXCEPTION 'Pet ID % does not belong to Customer ID %', p_pet_id, p_customer_id;
+        RAISE EXCEPTION 'Pet ID % does not belong to Customer ID %',
+            p_pet_id, p_customer_id;
+    END IF;
+
+    -- ✅ Kiểm tra employee có phải Doctor không
+    SELECT position
+    INTO v_employee_position
+    FROM employee
+    WHERE employee_id = p_employee_id;
+
+    IF v_employee_position IS NULL THEN
+        RAISE EXCEPTION 'Employee ID % does not exist', p_employee_id;
+    ELSIF v_employee_position <> 'Doctor' THEN
+        RAISE EXCEPTION 'Employee ID % is not a Doctor', p_employee_id
+        USING ERRCODE = '42501'; -- insufficient_privilege
     END IF;
 
     -- Chèn bản ghi vào bảng appointment
     INSERT INTO appointment (
-        customer_id, pet_id, branch_id, employee_id, appointment_time, status, channel
+        customer_id,
+        pet_id,
+        branch_id,
+        employee_id,
+        appointment_time,
+        status,
+        channel
     )
     VALUES (
-        p_customer_id, p_pet_id, p_branch_id, p_employee_id, p_appointment_time, p_status, p_channel
+        p_customer_id,
+        p_pet_id,
+        p_branch_id,
+        p_employee_id,
+        p_appointment_time,
+        p_status,
+        p_channel
     )
-    RETURNING appointment_id INTO v_appointment_id;
+    RETURNING appointment_id
+    INTO v_appointment_id;
 
     RETURN v_appointment_id;
 END;
@@ -317,10 +346,9 @@ BEGIN
     ------------------------------------------------------------------
     -- 2) Kiểm tra position là Receptionist
     ------------------------------------------------------------------
-    IF v_employee_position <> 'Receptionist' THEN
+    IF v_employee_position <> 'Sales' OR v_employee_position <> 'Receptionist' OR v_employee_position <> 'BranchManager' THEN
         RAISE EXCEPTION 'Employee % không phải Receptionist', v_employee_id;
     END IF;
-
     ------------------------------------------------------------------
     -- 3) Thêm invoice
     ------------------------------------------------------------------
@@ -1303,5 +1331,95 @@ BEGIN
 END;
 $$;
 
-SELECT *
-FROM fnc_get_prescription_by_medical_record(12);
+CREATE OR REPLACE FUNCTION fnc_get_doctor_busy_schedule(
+    p_employee_id INTEGER,
+    p_start_date  DATE DEFAULT NULL,
+    p_end_date    DATE DEFAULT NULL
+)
+RETURNS TABLE (
+    appointment_id   INTEGER,
+    appointment_time TIMESTAMP,
+    status           VARCHAR,
+    branch_id        INTEGER,
+	branch_name 	 VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_position VARCHAR;
+BEGIN
+    -- 1. Kiểm tra employee có tồn tại và là Doctor
+    SELECT position
+    INTO v_position
+    FROM employee
+    WHERE employee_id = p_employee_id;
+
+    IF v_position IS NULL THEN
+        RAISE EXCEPTION 'Employee ID % does not exist', p_employee_id;
+    ELSIF v_position <> 'Doctor' THEN
+        RAISE EXCEPTION 'Employee ID % is not a Doctor', p_employee_id;
+    END IF;
+
+    -- 2. Trả về lịch bận
+    RETURN QUERY
+    SELECT
+        a.appointment_id,
+        a.appointment_time,
+        a.status,
+        a.branch_id,
+		b.name
+    FROM appointment a
+		JOIN branch b on b.branch_id = a.branch_id
+    WHERE a.employee_id = p_employee_id
+      AND a.status IN ('Pending','Confirmed','Completed')
+      AND (p_start_date IS NULL OR a.appointment_time::DATE >= p_start_date)
+      AND (p_end_date   IS NULL OR a.appointment_time::DATE <= p_end_date)
+    ORDER BY a.appointment_time DESC;
+END;
+$$;
+
+SELECT * FROM fnc_get_doctor_busy_schedule(12, '2025-01-31', '2025-12-10');
+select * from invoice where invoice_id = 15001
+select * from invoice where customer_id = 9
+select * from employee where branch_id = 1
+select * from branch_service where branch_id = 1
+select * from invoice_detail where invoice_id = 15001
+select * from inventory where product_id = 5
+select * from warehouse where branch_id = 5
+
+CREATE OR REPLACE FUNCTION fnc_get_invoices_by_customer_phone(
+    p_phone     VARCHAR,
+    p_branch_id INTEGER DEFAULT NULL
+)
+RETURNS TABLE (
+    invoice_id      INTEGER,
+    created_at      TIMESTAMP,
+    branch_name     VARCHAR,
+    total_amount    NUMERIC(18,2),
+    discount_amount NUMERIC(18,2),
+    final_amount    NUMERIC(18,2),
+    payment_status  VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        i.invoice_id,
+        i.created_at,
+        b.name AS branch_name,
+        i.total_amount,
+        i.discount_amount,
+        i.final_amount,
+        i.payment_status
+    FROM invoice i
+    JOIN customer c ON i.customer_id = c.customer_id
+    JOIN branch   b ON i.branch_id   = b.branch_id
+    WHERE c.phone = p_phone
+      AND (p_branch_id IS NULL OR i.branch_id = p_branch_id)
+    ORDER BY i.created_at DESC;
+END;
+$$;
+select * from customer where customer_id = 9
+SELECT * 
+FROM fnc_get_invoices_by_customer_phone('0920000009', 1);

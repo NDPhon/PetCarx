@@ -7,6 +7,7 @@ import {
   findAppointmentByPhoneService,
   getServicesByAppointmentIdService,
   addServiceToAppointmentService,
+  getAppointmentByDoctorIdService,
 } from "../service/appointmentService";
 import { Appointment } from "../model/appointment";
 
@@ -160,4 +161,38 @@ router.post("/add-service", async (req: Request, res: Response) => {
   }
 });
 
+router.post(
+  "/get-appointments-by-doctor",
+  async (req: Request, res: Response) => {
+    try {
+      const {
+        doctor_id,
+        start_date = null,
+        end_date = null,
+      }: {
+        doctor_id: number;
+        start_date?: string | null;
+        end_date?: string | null;
+      } = req.body;
+
+      const appointments = await getAppointmentByDoctorIdService(
+        doctor_id,
+        start_date,
+        end_date
+      );
+      res.status(200).json({
+        code: 200,
+        message: "Fetched appointments successfully",
+        data: appointments,
+      });
+    } catch (error: any) {
+      console.error("Error fetching appointments by doctor ID:", error);
+      res.status(500).json({
+        code: 500,
+        message: error.message || "Internal Server Error",
+        data: null,
+      });
+    }
+  }
+);
 export default router;

@@ -5,6 +5,7 @@ import {
   addInvoiceDetailsController,
   getInvoiceDetailsByIdController,
   updateInvoicePaymentStatusController,
+  getInvoicesByCustomerPhoneController,
 } from "../controller/invoiceController";
 
 import { Router } from "express";
@@ -43,6 +44,14 @@ router.get(
 router.patch(
   "/update-invoice-payment-status",
   updateInvoicePaymentStatusController
+);
+
+/* ============================================================
+    GET INVOICES BY CUSTOMER PHONE
+============================================================ */
+router.post(
+  "/get-invoices-by-customer-phone",
+  getInvoicesByCustomerPhoneController
 );
 
 export default router;

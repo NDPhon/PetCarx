@@ -19,7 +19,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: true,
     credentials: true,
   })
 );
@@ -46,6 +46,8 @@ app.use("/api/pets", petRoute);
 app.use("/api/services", serviceRoute);
 // Route cho medical records
 app.use("/api/medical", medicalRoute);
+
+// Mock routes for other APIs during local testing
 
 const PORT: number = Number(process.env.BACKEND_PORT) || 8000;
 app.listen(PORT, () => {

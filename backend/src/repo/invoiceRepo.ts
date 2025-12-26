@@ -76,3 +76,15 @@ export const updateInvoicePaymentStatusRepo = async (
   const res = await pool.query(query, values);
   return res.rows[0] || null;
 };
+
+export const getInvoicesByCustomerPhoneRepo = async (
+  phone: string,
+  branch_id: number
+): Promise<any[]> => {
+  const query = `
+    SELECT * FROM fnc_get_invoices_by_customer_phone($1, $2)
+  `;
+  const values = [phone, branch_id];
+  const res = await pool.query(query, values);
+  return res.rows;
+};

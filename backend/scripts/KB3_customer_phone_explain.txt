@@ -1,0 +1,22 @@
+Task: KB3 - Customer lookup by phone - started at 2025-12-23T18:01:39.323Z
+
+-- DROP INDEX IF EXISTS ix_customer_phone
+Dropped index (if existed)
+
+-- EXPLAIN ANALYZE (no index)
+EXPLAIN (no index) output:
+Seq Scan on customer  (cost=0.00..1.00 rows=1 width=78) (actual time=0.843..0.843 rows=0 loops=1)
+  Filter: ((phone)::text = '0901234567'::text)
+Planning Time: 8.377 ms
+Execution Time: 0.861 ms
+
+-- CREATE INDEX ix_customer_phone
+Created index (if not exists)
+
+-- EXPLAIN ANALYZE (with index)
+EXPLAIN (with index) output:
+Seq Scan on customer  (cost=0.00..1.00 rows=1 width=78) (actual time=0.007..0.008 rows=0 loops=1)
+  Filter: ((phone)::text = '0901234567'::text)
+Planning Time: 0.180 ms
+Execution Time: 0.023 ms
+Task: KB3 - Customer lookup by phone - finished at 2025-12-23T18:01:39.801Z

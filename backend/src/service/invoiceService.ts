@@ -5,6 +5,7 @@ import {
   addInvoiceDetailsRepo,
   getInvoiceDetailsByIdRepo,
   updateInvoicePaymentStatusRepo,
+  getInvoicesByCustomerPhoneRepo,
 } from "../repo/invoiceRepo";
 
 import { Invoice } from "../model/invoice";
@@ -62,4 +63,11 @@ export const updateInvoicePaymentStatusService = async (
   payment_status: string
 ): Promise<Invoice | null> => {
   return await updateInvoicePaymentStatusRepo(invoice_id, payment_status);
+};
+
+export const getInvoicesByCustomerPhoneService = async (
+  phone: string,
+  branch_id: number
+): Promise<any[]> => {
+  return await getInvoicesByCustomerPhoneRepo(phone, branch_id);
 };

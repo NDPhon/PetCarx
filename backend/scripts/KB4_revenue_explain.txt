@@ -1,0 +1,50 @@
+Task: KB4 - Revenue by branch (invoice/payment) - started at 2025-12-23T18:01:39.802Z
+
+-- DROP INDEX IF EXISTS ix_invoice_branch_created_at
+Dropped index (if existed)
+
+-- EXPLAIN ANALYZE (no index)
+EXPLAIN (no index) output:
+GroupAggregate  (cost=18.00..18.02 rows=1 width=262) (actual time=0.012..0.013 rows=0 loops=1)
+  Group Key: b.branch_id
+  ->  Sort  (cost=18.00..18.00 rows=1 width=246) (actual time=0.011..0.012 rows=0 loops=1)
+        Sort Key: b.branch_id
+        Sort Method: quicksort  Memory: 25kB
+        ->  Nested Loop  (cost=4.46..17.99 rows=1 width=246) (actual time=0.007..0.008 rows=0 loops=1)
+              ->  Nested Loop  (cost=4.32..17.72 rows=1 width=28) (actual time=0.007..0.008 rows=0 loops=1)
+                    ->  Bitmap Heap Scan on payment p  (cost=4.17..9.52 rows=1 width=28) (actual time=0.007..0.007 rows=0 loops=1)
+                          Recheck Cond: ((paid_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (paid_at <= '2025-12-31 00:00:00'::timestamp without time zone))
+                          Filter: ((status)::text = 'Completed'::text)
+                          ->  Bitmap Index Scan on ix_payment_paid_at  (cost=0.00..4.17 rows=2 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                Index Cond: ((paid_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (paid_at <= '2025-12-31 00:00:00'::timestamp without time zone))
+                    ->  Index Scan using invoice_pkey on invoice i  (cost=0.15..8.17 rows=1 width=8) (never executed)
+                          Index Cond: (invoice_id = p.invoice_id)
+              ->  Index Scan using branch_pkey on branch b  (cost=0.14..0.26 rows=1 width=222) (never executed)
+                    Index Cond: (branch_id = i.branch_id)
+Planning Time: 8.258 ms
+Execution Time: 0.082 ms
+
+-- CREATE INDEX ix_invoice_branch_created_at
+Created index (if not exists)
+
+-- EXPLAIN ANALYZE (with index)
+EXPLAIN (with index) output:
+GroupAggregate  (cost=18.00..18.02 rows=1 width=262) (actual time=0.010..0.011 rows=0 loops=1)
+  Group Key: b.branch_id
+  ->  Sort  (cost=18.00..18.00 rows=1 width=246) (actual time=0.009..0.010 rows=0 loops=1)
+        Sort Key: b.branch_id
+        Sort Method: quicksort  Memory: 25kB
+        ->  Nested Loop  (cost=4.46..17.99 rows=1 width=246) (actual time=0.006..0.006 rows=0 loops=1)
+              ->  Nested Loop  (cost=4.32..17.72 rows=1 width=28) (actual time=0.005..0.006 rows=0 loops=1)
+                    ->  Bitmap Heap Scan on payment p  (cost=4.17..9.52 rows=1 width=28) (actual time=0.005..0.005 rows=0 loops=1)
+                          Recheck Cond: ((paid_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (paid_at <= '2025-12-31 00:00:00'::timestamp without time zone))
+                          Filter: ((status)::text = 'Completed'::text)
+                          ->  Bitmap Index Scan on ix_payment_paid_at  (cost=0.00..4.17 rows=2 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                Index Cond: ((paid_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (paid_at <= '2025-12-31 00:00:00'::timestamp without time zone))
+                    ->  Index Scan using invoice_pkey on invoice i  (cost=0.15..8.17 rows=1 width=8) (never executed)
+                          Index Cond: (invoice_id = p.invoice_id)
+              ->  Index Scan using branch_pkey on branch b  (cost=0.14..0.26 rows=1 width=222) (never executed)
+                    Index Cond: (branch_id = i.branch_id)
+Planning Time: 0.355 ms
+Execution Time: 0.060 ms
+Task: KB4 - Revenue by branch (invoice/payment) - finished at 2025-12-23T18:01:40.087Z

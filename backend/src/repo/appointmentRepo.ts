@@ -97,3 +97,16 @@ export const addServiceToAppointmentRepo = async (
   const values = [appointment_id, service_id];
   await pool.query(query, values);
 };
+
+export const getAppointmentByDoctorIdRepo = async (
+  doctor_id: number,
+  start_date: string | null,
+  end_date: string | null
+): Promise<Appointment[]> => {
+  const query = `
+    SELECT * FROM fnc_get_doctor_busy_schedule($1, $2, $3)
+  `;
+  const values = [doctor_id, start_date, end_date];
+  const res = await pool.query(query, values);
+  return res.rows;
+};
