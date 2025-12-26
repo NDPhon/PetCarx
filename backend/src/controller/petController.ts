@@ -1,6 +1,7 @@
 import {
   addPetService,
   getPetsByCustomerIdService,
+  getPetsExaminedByDoctorService,
 } from "../service/petService";
 import { Request, Response } from "express";
 
@@ -64,6 +65,28 @@ export const getPetsByCustomerIdController = async (
     });
   } catch (error: any) {
     console.error("Error fetching pets by customer ID:", error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || "Internal Server Error",
+      data: null,
+    });
+  }
+};
+
+export const getPetsExaminedByDoctorController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const doctor_id: number = parseInt(req.params.doctor_id, 10);
+    const pets = await getPetsExaminedByDoctorService(doctor_id);
+    res.status(200).json({
+      code: 200,
+      message: "Fetched pets successfully",
+      data: pets,
+    });
+  } catch (error: any) {
+    console.error("Error fetching pets examined by doctor ID:", error);
     res.status(500).json({
       code: 500,
       message: error.message || "Internal Server Error",

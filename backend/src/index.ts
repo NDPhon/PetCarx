@@ -10,6 +10,7 @@ import productRouter from "./routes/productRoutes";
 import analyzeRouter from "./routes/analyzeRoutes";
 import petRoute from "./routes/petRoutes";
 import serviceRoute from "./routes/serviceRoutes";
+import medicalRoute from "./routes/medicalRoutes";
 
 dotenv.config();
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
@@ -43,6 +44,8 @@ app.use("/api/analyze", analyzeRouter);
 app.use("/api/pets", petRoute);
 // Route cho service
 app.use("/api/services", serviceRoute);
+// Route cho medical records
+app.use("/api/medical", medicalRoute);
 
 const PORT: number = Number(process.env.BACKEND_PORT) || 8000;
 app.listen(PORT, () => {

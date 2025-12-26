@@ -18,8 +18,8 @@ router.get(
 /* ============================================================
    SEARCH PRODUCT BY NAME IN BRANCH
 ============================================================ */
-router.get(
-  "/search-product-by-name-in-branch/:branch_id",
+router.post(
+  "/search-product-by-name-in-branch",
   searchProductByNameInBranchController
 );
 /* ============================================================

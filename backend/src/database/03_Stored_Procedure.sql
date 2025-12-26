@@ -7,6 +7,7 @@ select * from membership_tier
 select * from customer
 select * from pet
 select * from appointment
+select * from reminder
 select * from appointment_service
 select * from service
 select * from invoice
@@ -107,6 +108,46 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION fnc_get_appointments_paging(
+    p_limit INT,
+    p_offset INT
+)
+RETURNS TABLE(
+    appointment_id INTEGER,
+    customer_name VARCHAR,
+    customer_phone VARCHAR,
+    pet_name VARCHAR,
+    branch_name VARCHAR,
+    employee_name VARCHAR,
+    appointment_status VARCHAR,
+    appointment_time TIMESTAMP,
+    appointment_channel VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        a.appointment_id,
+        c.full_name AS customer_name,
+        c.phone AS customer_phone,
+        p.pet_name,
+        b.name AS branch_name,
+        e.full_name AS employee_name,
+        a.status AS appointment_status,
+        a.appointment_time,
+        a.channel AS appointment_channel
+    FROM appointment a
+    JOIN customer c ON a.customer_id = c.customer_id
+    JOIN pet p ON a.pet_id = p.pet_id
+    JOIN branch b ON a.branch_id = b.branch_id
+    JOIN employee e ON a.employee_id = e.employee_id
+    ORDER BY a.appointment_time DESC
+    LIMIT p_limit
+    OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from service
+select * from product
 drop function fnc_update_appointment_status
 CREATE OR REPLACE FUNCTION fnc_update_appointment_status(
     v_appointment_id INT,
@@ -159,7 +200,7 @@ BEGIN
         s.service_name,
         s.service_type
     FROM appointment_service aps
-    JOIN service s ON s.service_id = thêm aps.service_id
+    JOIN service s ON s.service_id = aps.service_id
     WHERE aps.appointment_id = p_appointment_id;
 
 END;
@@ -236,7 +277,7 @@ BEGIN
 
 END;
 $$;
-select * from employee
+
 CREATE OR REPLACE FUNCTION fnc_add_invoice(
     p_branch_id      INTEGER,
     p_customer_id    INTEGER,
@@ -303,7 +344,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-select * from product
 CREATE OR REPLACE FUNCTION fnc_add_invoice_detail(
     p_invoice_id INTEGER,
     p_item_type  VARCHAR(20),
@@ -443,9 +483,6 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
-
-
-select * from invoice
 
 CREATE OR REPLACE FUNCTION fnc_update_invoice_total(
     p_invoice_id INTEGER
@@ -611,9 +648,7 @@ BEGIN
     WHERE i.invoice_id = p_invoice_id;
 END;
 $$ LANGUAGE plpgsql;
-select * from inventory where warehouse_id = 1
-select * from warehouse where branch_id = 1
-select * from Product where product_id = 16
+
 CREATE OR REPLACE FUNCTION fnc_get_invoice_details(
     p_invoice_id INTEGER
 )
@@ -641,12 +676,11 @@ BEGIN
     ORDER BY id.line_no;
 END;
 $$ LANGUAGE plpgsql;
-select * from invoice
 
 // ===================================================
 //CUSTOMER
 // ===================================================
-
+select * from appointment
 CREATE OR REPLACE FUNCTION fnc_get_customer_by_phone(
     p_phone VARCHAR
 )
@@ -654,22 +688,19 @@ RETURNS TABLE (
     customer_id   INTEGER,
     name          VARCHAR,
     phone         VARCHAR,
-    email         VARCHAR,
-    created_at    TIMESTAMP
+    email         VARCHAR
 ) AS $$
 BEGIN
     RETURN QUERY
     SELECT c.customer_id,
-           c.name,
+           c.full_name as name,
            c.phone,
-           c.email,
-           c.created_at
+           c.email
     FROM customer c
     WHERE c.phone = p_phone;
 END;
 $$ LANGUAGE plpgsql;
-drop function update_invoice_status
-select * from 
+
 CREATE OR REPLACE FUNCTION fnc_update_invoice_status(
     p_invoice_id INTEGER,
     p_new_status VARCHAR
@@ -746,11 +777,7 @@ BEGIN
     RETURN p_new_status;
 END;
 $$ LANGUAGE plpgsql;
-select * from inventory
-select * from product
-insert into inventory ( quantity, warehouse_id, product_id)
-values(100, 1, 1)
-select * from fnc_get_all_by_branch()
+
 CREATE OR REPLACE FUNCTION fnc_get_all_by_branch()
 RETURNS TABLE (
     branch_id     INTEGER,
@@ -825,12 +852,7 @@ BEGIN
 END;
 $$;
 
-select * from fnc_get_product_by_branch(1, 'Vaccine')
-select * from inventory
-select * from warehouse
-select * from product
-drop function fnc_search_vaccine_by_name
-CREATE OR REPLACE FUNCTION fnc_search_vaccine_by_name(
+CREATE OR REPLACE FUNCTION fnc_search_product_by_name(
     p_keyword     VARCHAR,
 	p_branch_id   INTEGER DEFAULT NULL
 )
@@ -864,7 +886,7 @@ BEGIN
     ORDER BY p.product_name;
 END;
 $$;
-select * from fnc_search_vaccine_by_name('Bor', 1)
+
 CREATE OR REPLACE FUNCTION fnc_get_products_by_branch(
     p_branch_id INTEGER
 )
@@ -909,76 +931,21 @@ BEGIN
     ORDER BY p.product_name;
 END;
 $$;
-
-CREATE OR REPLACE FUNCTION fnc_total_revenue(
-    p_start_date DATE,
-    p_end_date   DATE
-)
-RETURNS NUMERIC(18,2) AS $$
-DECLARE
-    v_total_revenue NUMERIC(18,2);
-BEGIN
-    SELECT COALESCE(SUM(p.paid_amount), 0)
-    INTO v_total_revenue
-    FROM payment p
-    WHERE p.status = 'Completed'
-      AND p.paid_at >= p_start_date and p.paid_at <= p_end_date;
-
-    RETURN v_total_revenue;
-END;
-$$ LANGUAGE plpgsql;
-
-select * from fnc_total_revenue('2025-01-01', '2025-12-31')
-
-drop function fnc_get_payments_by_date
-CREATE OR REPLACE FUNCTION fnc_get_payments_by_date(
-    p_start_date DATE,
-    p_end_date   DATE
-)
-RETURNS TABLE (
-    payment_id     INTEGER,
-    invoice_id     INTEGER,
-    branch_name    VARCHAR,
-    customer_name  VARCHAR,
-    paid_amount    NUMERIC(18,2),
-    payment_method VARCHAR(20),
-    paid_at        TIMESTAMP,
-    status         VARCHAR(20)
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        p.payment_id,
-        p.invoice_id,
-        b.name        AS branch_name,
-        c.full_name   AS customer_name,
-        p.paid_amount,
-        p.payment_method,
-        p.paid_at,
-        p.status
-    FROM payment p
-    JOIN invoice  i ON p.invoice_id = i.invoice_id
-    JOIN branch   b ON i.branch_id  = b.branch_id
-    JOIN customer c ON i.customer_id = c.customer_id
-    WHERE p.status = 'Completed'
-      AND p.paid_at::DATE BETWEEN p_start_date AND p_end_date
-    ORDER BY p.paid_at;
-END;
-$$ LANGUAGE plpgsql;
-
-select * from fnc_revenue_by_branch(1, '2025-01-01', '2025-12-31')
-
+drop function fnc_revenue_by_branch
 CREATE OR REPLACE FUNCTION fnc_revenue_by_branch(
-    p_branch_id  INTEGER,
+    
     p_start_date DATE,
-    p_end_date   DATE
+    p_end_date   DATE,
+	p_branch_id  INTEGER DEFAULT NULL
 )
 RETURNS TABLE (
     branch_id     INTEGER,
     branch_name   VARCHAR,
     total_revenue NUMERIC(18,2),
     total_payment BIGINT
-) AS $$
+)
+LANGUAGE plpgsql
+AS $$
 BEGIN
     RETURN QUERY
     SELECT
@@ -990,22 +957,25 @@ BEGIN
     JOIN invoice  i ON p.invoice_id = i.invoice_id
     JOIN branch   b ON i.branch_id  = b.branch_id
     WHERE p.status = 'Completed'
-      AND i.branch_id = p_branch_id
+      AND (p_branch_id IS NULL OR i.branch_id = p_branch_id)
       AND p.paid_at::DATE BETWEEN p_start_date AND p_end_date
-    GROUP BY b.branch_id, b.name;
+    GROUP BY b.branch_id, b.name
+    ORDER BY b.name;
 END;
-$$ LANGUAGE plpgsql;
-
+$$;
 select * from fnc_get_payments_by_branch(1, '2025-01-01', '2025-12-31')
-
+drop function fnc_get_payments_by_branch
 CREATE OR REPLACE FUNCTION fnc_get_payments_by_branch(
     p_branch_id  INTEGER,
     p_start_date DATE,
-    p_end_date   DATE
+    p_end_date   DATE,
+    p_page       INTEGER DEFAULT 1,
+    p_page_size  INTEGER DEFAULT 10
 )
 RETURNS TABLE (
     payment_id     INTEGER,
     invoice_id     INTEGER,
+    branch_id      INTEGER,
     branch_name    VARCHAR,
     customer_name  VARCHAR,
     paid_amount    NUMERIC(18,2),
@@ -1018,6 +988,7 @@ BEGIN
     SELECT
         p.payment_id,
         p.invoice_id,
+        b.branch_id,
         b.name        AS branch_name,
         c.full_name   AS customer_name,
         p.paid_amount,
@@ -1029,20 +1000,24 @@ BEGIN
     JOIN branch   b ON i.branch_id  = b.branch_id
     JOIN customer c ON i.customer_id = c.customer_id
     WHERE p.status = 'Completed'
-      AND i.branch_id = p_branch_id
+      AND (p_branch_id IS NULL OR i.branch_id = p_branch_id)
       AND p.paid_at::DATE BETWEEN p_start_date AND p_end_date
-    ORDER BY p.paid_at;
+    ORDER BY p.paid_at DESC
+    OFFSET (p_page - 1) * p_page_size
+    LIMIT p_page_size;
 END;
 $$ LANGUAGE plpgsql;
-drop function fnc_get_services_by_branch_id
+
 CREATE OR REPLACE FUNCTION fnc_get_services_by_branch_id(
-    p_branch_id INTEGER
+    p_branch_id INTEGER,
+	p_service_type VARCHAR DEFAULT NULL
 )
 RETURNS TABLE (
     service_id      INTEGER,
     service_name    VARCHAR,
     description     VARCHAR,
     price           NUMERIC(18,2),
+	service_type 	VARCHAR,
     is_available    boolean
 )
 LANGUAGE plpgsql
@@ -1054,12 +1029,279 @@ BEGIN
         s.service_name,
         s.description,
         s.base_price,
+		s.service_type,
         bs.is_available
     FROM branch_service bs
     JOIN service s 
         ON s.service_id = bs.service_id
     WHERE bs.branch_id = p_branch_id
-      AND s.is_active = TRUE;
+      AND s.is_active = TRUE
+	  AND (p_service_type IS NULL OR p_service_type = s.service_type);
 END;
 $$;
-select * from fnc_get_services_by_branch_id(1)
+select * from fnc_get_services_by_branch_id(2, 'Vaccination')
+
+CREATE OR REPLACE FUNCTION fnc_get_all_services_by_branch()
+RETURNS TABLE (
+    branch_id     INTEGER,
+    branch_name   VARCHAR,
+    service_id    INTEGER,
+    service_name  VARCHAR,
+    service_type  VARCHAR,
+    base_price    NUMERIC,
+    final_price   NUMERIC,
+    is_available  BOOLEAN
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        b.branch_id,
+        b.name AS branch_name,
+        s.service_id,
+        s.service_name,
+        s.service_type,
+        s.base_price,
+        COALESCE(bs.price_override, s.base_price) AS final_price,
+        bs.is_available
+    FROM branch b
+    JOIN branch_service bs ON bs.branch_id = b.branch_id
+    JOIN service s        ON s.service_id = bs.service_id
+    WHERE s.is_active = TRUE
+    ORDER BY
+        b.name,
+        s.service_name;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fnc_search_service_by_name(
+    p_keyword    VARCHAR,
+    p_branch_id  INTEGER DEFAULT NULL
+)
+RETURNS TABLE (
+    branch_id     INTEGER,
+    branch_name   VARCHAR,
+    service_id    INTEGER,
+    service_name  VARCHAR,
+    service_type  VARCHAR,
+    base_price    NUMERIC,
+    final_price   NUMERIC,
+    is_available  BOOLEAN
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        b.branch_id,
+        b.name AS branch_name,
+        s.service_id,
+        s.service_name,
+        s.service_type,
+        s.base_price,
+        COALESCE(bs.price_override, s.base_price) AS final_price,
+        bs.is_available
+    FROM service s
+    JOIN branch_service bs ON bs.service_id = s.service_id
+    JOIN branch b          ON b.branch_id = bs.branch_id
+    WHERE (p_branch_id IS NULL OR b.branch_id = p_branch_id)
+      AND s.is_active = TRUE
+      AND s.service_name ILIKE '%' || p_keyword || '%'
+    ORDER BY
+        b.name,
+        s.service_name;
+END;
+$$;
+select * from fnc_search_service_by_name('Exam', 1)
+select * from fnc_find_appointments_by_phone('0920000839')
+drop function fnc_find_appointments_by_phone
+select * from appointment
+CREATE OR REPLACE FUNCTION fnc_find_appointments_by_phone(
+    p_phone     VARCHAR,
+    p_branch_id INTEGER DEFAULT NULL
+)
+RETURNS TABLE (
+    appointment_id   INTEGER,
+    appointment_time TIMESTAMP,
+    status           VARCHAR,
+    customer_name    VARCHAR,
+    customer_phone   VARCHAR,
+    branch_name      VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        a.appointment_id,
+        a.appointment_time,
+        a.status,
+        c.full_name AS customer_name,
+        c.phone     AS customer_phone,
+        b.name      AS branch_name
+    FROM appointment a
+    JOIN customer c ON a.customer_id = c.customer_id
+    JOIN branch   b ON a.branch_id   = b.branch_id
+    WHERE c.phone ILIKE '%' || p_phone || '%'
+      AND (p_branch_id IS NULL OR a.branch_id = p_branch_id)
+    ORDER BY
+        a.appointment_time DESC;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fnc_get_pets_examined_by_doctor(
+    p_employee_id INTEGER
+)
+RETURNS TABLE (
+    pet_id           INTEGER,
+    pet_name         VARCHAR,
+    species          VARCHAR,
+    breed            VARCHAR,
+    last_exam_date   TIMESTAMP
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.pet_id,
+        p.pet_name       AS pet_name,
+        p.species,
+        p.breed,
+        MAX(mr.exam_date) AS last_exam_date
+    FROM medical_record mr
+    JOIN medical_record_employee mre 
+         ON mr.medical_record_id = mre.medical_record_id
+    JOIN pet p 
+         ON mr.pet_id = p.pet_id
+    WHERE mre.employee_id = p_employee_id
+    GROUP BY
+        p.pet_id,
+        p.pet_name,
+        p.species,
+        p.breed
+    ORDER BY
+        last_exam_date DESC;
+END;
+$$;
+select * from fnc_get_pets_examined_by_doctor(14)
+
+drop FUNCTION fnc_get_medical_record_detail
+CREATE OR REPLACE FUNCTION fnc_get_medical_history_by_pet_and_doctor(
+    p_pet_id       INTEGER,
+    p_employee_id  INTEGER
+)
+RETURNS TABLE (
+    medical_record_id INTEGER,
+    exam_date         TIMESTAMP,
+    diagnosis         VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_is_doctor BOOLEAN;
+BEGIN
+    -- Kiểm tra employee có phải bác sĩ không
+    SELECT (position = 'Doctor')
+    INTO v_is_doctor
+    FROM employee
+    WHERE employee_id = p_employee_id;
+
+    IF v_is_doctor IS DISTINCT FROM TRUE THEN
+        RAISE EXCEPTION 'Employee % is not a doctor', p_employee_id
+        USING ERRCODE = '42501'; -- insufficient_privilege
+    END IF;
+
+    -- Trả lịch sử khám
+    RETURN QUERY
+    SELECT
+        mr.medical_record_id,
+        mr.exam_date,
+        mr.diagnosis
+    FROM medical_record mr
+    JOIN medical_record_employee mre
+         ON mr.medical_record_id = mre.medical_record_id
+    WHERE mr.pet_id = p_pet_id
+      AND mre.employee_id = p_employee_id
+    ORDER BY mr.exam_date DESC;
+END;
+$$;
+
+select * from employee
+SELECT * FROM fnc_get_medical_history_by_pet_and_doctor(412, 12);
+
+
+CREATE OR REPLACE FUNCTION fnc_get_medical_record_detail(
+    p_record_id INTEGER
+)
+RETURNS TABLE (
+    medical_record_id INTEGER,
+    exam_date         TIMESTAMP,
+    diagnosis         VARCHAR,
+    pet_id            INTEGER,
+    pet_name          VARCHAR,
+    doctor_name       VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        mr.medical_record_id,
+        mr.exam_date,
+        mr.diagnosis,
+        p.pet_id,
+        p.pet_name,
+        e.full_name     AS doctor_name
+    FROM medical_record mr
+    JOIN pet p 
+         ON mr.pet_id = p.pet_id
+    JOIN medical_record_employee mre
+         ON mr.medical_record_id = mre.medical_record_id
+    JOIN employee e
+         ON mre.employee_id = e.employee_id
+    WHERE mr.medical_record_id = p_record_id;
+END;
+$$;
+SELECT *
+FROM fnc_get_medical_record_detail(12);
+
+CREATE OR REPLACE FUNCTION fnc_get_prescription_by_medical_record(
+    p_medical_record_id INTEGER
+)
+RETURNS TABLE (
+    prescription_id    INTEGER,
+    product_id         INTEGER,
+    product_name       VARCHAR,
+    quantity           INTEGER,
+    unit               VARCHAR,
+    usage_instruction  VARCHAR,
+    notes              VARCHAR,
+    created_at         TIMESTAMP
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        pr.prescription_id,
+        pd.product_id,
+        p.product_name,
+        pd.quantity,
+        pd.unit,
+        pd.usage_instruction,
+        pr.notes,
+        pr.created_at
+    FROM prescription pr
+    JOIN prescription_detail pd
+         ON pr.prescription_id = pd.prescription_id
+    JOIN product p
+         ON pd.product_id = p.product_id
+    WHERE pr.medical_record_id = p_medical_record_id
+    ORDER BY pr.created_at, p.product_name;
+END;
+$$;
+
+SELECT *
+FROM fnc_get_prescription_by_medical_record(12);

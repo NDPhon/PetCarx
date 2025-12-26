@@ -307,6 +307,7 @@ CREATE TABLE prescription (
     notes            VARCHAR(500)
 );
 
+
 -- 6.4 PrescriptionDetail
 CREATE TABLE prescription_detail (
     prescription_id   INTEGER      NOT NULL REFERENCES prescription(prescription_id),

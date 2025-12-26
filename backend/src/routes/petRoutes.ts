@@ -1,6 +1,7 @@
 import {
   addPetController,
   getPetsByCustomerIdController,
+  getPetsExaminedByDoctorController,
 } from "../controller/petController";
 import { Router } from "express";
 const router = Router();
@@ -16,4 +17,11 @@ router.get(
   getPetsByCustomerIdController
 );
 
+/* ============================================================
+   GET PETS EXAMINED BY DOCTOR ID
+============================================================ */
+router.get(
+  "/get-pets-examined-by-doctor/:doctor_id",
+  getPetsExaminedByDoctorController
+);
 export default router;

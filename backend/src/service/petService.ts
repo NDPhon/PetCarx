@@ -1,4 +1,8 @@
-import { addPetRepo, getPetsByCustomerIdRepo } from "../repo/petRepo";
+import {
+  addPetRepo,
+  getPetsByCustomerIdRepo,
+  getPetsExaminedByDoctorRepo,
+} from "../repo/petRepo";
 import { Pet } from "../model/pet";
 export const addPetService = async (
   customer_id: number,
@@ -24,4 +28,10 @@ export const getPetsByCustomerIdService = async (
   customer_id: number
 ): Promise<Pet[]> => {
   return await getPetsByCustomerIdRepo(customer_id);
+};
+
+export const getPetsExaminedByDoctorService = async (
+  doctor_id: number
+): Promise<Pet[]> => {
+  return await getPetsExaminedByDoctorRepo(doctor_id);
 };

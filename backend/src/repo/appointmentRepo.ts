@@ -30,10 +30,26 @@ export const insertAppointmentRepo = async (
   return res.rows[0];
 };
 
-export const getAppointmentsRepo = async (): Promise<Appointment[]> => {
-  const query = `SELECT * FROM fnc_get_appointments()`;
-  const res = await pool.query(query);
-  return res.rows;
+export const getAppointmentsRepo = async (page: number, limit: number) => {
+  const offset = (page - 1) * limit;
+
+  const dataQuery = `
+    SELECT * FROM fnc_get_appointments_paging($1, $2)
+  `;
+
+  const countQuery = `
+    SELECT COUNT(*) FROM appointment
+  `;
+
+  const [dataRes, countRes] = await Promise.all([
+    pool.query(dataQuery, [limit, offset]),
+    pool.query(countQuery),
+  ]);
+
+  return {
+    data: dataRes.rows,
+    total: Number(countRes.rows[0].count),
+  };
 };
 
 export const updateAppointmentStatusRepo = async (

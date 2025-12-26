@@ -16,8 +16,8 @@ export const insertAppointmentService = async (
   return await insertAppointmentRepo(appt);
 };
 
-export const getAppointmentsService = async (): Promise<Appointment[]> => {
-  return await getAppointmentsRepo();
+export const getAppointmentsService = async (page: number, limit: number) => {
+  return await getAppointmentsRepo(page, limit);
 };
 
 export const updateAppointmentStatusService = async (

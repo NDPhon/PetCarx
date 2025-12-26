@@ -35,3 +35,14 @@ export const getPetsByCustomerIdRepo = async (
   const res = await pool.query(query, values);
   return res.rows;
 };
+
+export const getPetsExaminedByDoctorRepo = async (
+  doctor_id: number
+): Promise<Pet[]> => {
+  const query = `
+    SELECT * from fnc_get_pets_examined_by_doctor($1)
+  `;
+  const values = [doctor_id];
+  const res = await pool.query(query, values);
+  return res.rows;
+};

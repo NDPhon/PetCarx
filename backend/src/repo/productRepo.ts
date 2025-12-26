@@ -18,7 +18,7 @@ export const searchProductByNameInBranchRepo = async (
   name: string
 ): Promise<Product[]> => {
   const query = `
-    SELECT * FROM fnc_search_vaccine_by_name($1, $2)
+    SELECT * FROM fnc_search_product_by_name($1, $2)
   `;
   const values = [name, branch_id];
   const res = await pool.query(query, values);

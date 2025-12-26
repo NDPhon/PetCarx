@@ -37,8 +37,7 @@ export const searchProductByNameInBranchController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const branch_id: number = parseInt(req.params.branch_id, 10);
-    const name: string = req.query.name as string;
+    const { branch_id, name }: { branch_id: number; name: string } = req.body;
     const products = await searchProductByNameInBranchService(branch_id, name);
     res.status(200).json({
       code: 200,

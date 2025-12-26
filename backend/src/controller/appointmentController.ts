@@ -39,18 +39,27 @@ router.post("/add-appointment", async (req: Request, res: Response) => {
 /* ============================================================
    GET APPOINTMENTS
 ============================================================ */
+// routes/appointment.route.ts
 router.get("/get-appointments", async (req: Request, res: Response) => {
   try {
-    const appointments = await getAppointmentsService();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const result = await getAppointmentsService(page, limit);
 
     res.status(200).json({
       code: 200,
       message: "Fetched appointments successfully",
-      data: appointments,
+      data: result.data,
+      pagination: {
+        page,
+        limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / limit),
+      },
     });
   } catch (error: any) {
     console.error("Error fetching appointments:", error);
-
     res.status(500).json({
       code: 500,
       message: error.message || "Internal Server Error",
